@@ -11,6 +11,7 @@ public class PlayerInteraction : MonoBehaviour
 {
     public Transform InteractorSource;
     public float InteractRange;
+    public LayerMask interactableMask;
 
     void Start()
     {
@@ -27,26 +28,20 @@ public class PlayerInteraction : MonoBehaviour
             Ray ray = new Ray(InteractorSource.position, InteractorSource.forward);
             RaycastHit hitInfo;
 
-            // Debug: Log that a raycast is being performed
             Debug.Log("PlayerInteraction: E key pressed. Performing raycast.");
 
-            if (Physics.Raycast(ray, out hitInfo, InteractRange))
+            if (Physics.Raycast(ray, out hitInfo, InteractRange, interactableMask))
             {
                 GameObject hitObject = hitInfo.collider.gameObject;
-                // Debug: Log what object was hit
                 Debug.Log($"PlayerInteraction: Raycast hit object: {hitObject.name}");
 
-                // Try to get the IInteractable component
-                IInteractable interactObj;
-                if (hitObject.TryGetComponent(out interactObj))
+                if (hitObject.TryGetComponent(out IInteractable interactObj))
                 {
-                    // Debug: Log that an IInteractable was found
                     Debug.Log($"PlayerInteraction: Found IInteractable on {hitObject.name}. Calling Interact().");
                     interactObj.Interact();
                 }
                 else
                 {
-                    // Debug: Log that no IInteractable was found and list components
                     Debug.LogWarning($"PlayerInteraction: Hit {hitObject.name} but it is not interactable. Components on this GameObject:");
                     foreach (Component comp in hitObject.GetComponents<Component>())
                     {
@@ -56,7 +51,6 @@ public class PlayerInteraction : MonoBehaviour
             }
             else
             {
-                // Debug: Log if nothing was hit by the raycast
                 Debug.Log("PlayerInteraction: Raycast hit nothing.");
             }
         }

@@ -1,32 +1,66 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class MainMenuManager : MonoBehaviour
 {
-    public void NewGame()
+    [Header("Scene to Load")]
+    // Assign the name of your main game scene in the Inspector (e.g., "MainScene")
+    public string newGameSceneName;
+
+    [Header("UI Panels")]
+    // Assign your Settings Panel GameObject in the Inspector
+    public GameObject settingsPanel;
+
+    void Start()
     {
-        // Load your gameplay scene (change "GameScene" to your actual game scene name)
-        SceneManager.LoadScene("GameScene");
+        // Make sure the settings panel is hidden when the menu starts
+        if (settingsPanel != null)
+        {
+            settingsPanel.SetActive(false);
+        }
     }
 
-    public void LoadGame()
+    // --- Button Functions ---
+
+    public void OnNewGameButton()
     {
-        // Implement your load logic or load to checkpoint
-        Debug.Log("Load Game clicked");
+        if (!string.IsNullOrEmpty(newGameSceneName))
+        {
+            Debug.Log($"Starting new game, loading scene: {newGameSceneName}");
+            SceneManager.LoadScene(newGameSceneName);
+        }
+        else
+        {
+            Debug.LogError("New Game Scene Name is not set in the MainMenuManager Inspector!");
+        }
     }
 
-    public void OpenSettings()
+    public void OnLoadGameButton()
     {
-        // Show settings panel
-        Debug.Log("Settings clicked");
+        // Placeholder for future save/load functionality
+        Debug.Log("Load Game button pressed. (Functionality not yet implemented)");
+        // Example: SaveSystem.LoadGame();
     }
 
-    public void ExitGame()
+    public void OnSettingsButton()
     {
+        if (settingsPanel != null)
+        {
+            // Toggle the settings panel's visibility
+            bool isActive = settingsPanel.activeSelf;
+            settingsPanel.SetActive(!isActive);
+            Debug.Log($"Settings panel toggled to: {!isActive}");
+        }
+        else
+        {
+            Debug.LogError("Settings Panel is not assigned in the MainMenuManager Inspector!");
+        }
+    }
+
+    public void OnExitButton()
+    {
+        Debug.Log("Exit button pressed. Quitting application.");
+        // This will only work in a built version of the game, not in the Unity Editor.
         Application.Quit();
-        Debug.Log("Exit clicked"); // Useful for testing in editor
     }
 }
-

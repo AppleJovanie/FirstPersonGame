@@ -1,67 +1,51 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class DoorController : MonoBehaviour
 {
-    public bool isLocked = true; // Is the door currently locked?
-    // Public field to specify the name of the next scene to load.
+    // The specific item required to open this door (e.g., GunData)
+    public ItemData requiredItem;
     public string nextSceneName;
+
+    private InventoryManager inventoryManager;
 
     void Start()
     {
-        // No initial rotation needed as the door will not visually open.
-        // Ensure nextSceneName is assigned in the Inspector.
-        if (string.IsNullOrEmpty(nextSceneName))
+        // Find the inventory manager when the scene starts
+        inventoryManager = FindObjectOfType<InventoryManager>();
+        if (inventoryManager == null)
         {
-            Debug.LogWarning($"DoorController on {gameObject.name}: nextSceneName is not assigned! Please set the scene name in the Inspector.");
+            Debug.LogError("DoorController could not find an InventoryManager in the scene!");
         }
     }
 
-    // This method is called when another collider enters this door's trigger collider.
     private void OnTriggerEnter(Collider other)
     {
-        // Assuming your player has the tag "Player" and a Rigidbody/CharacterController.
         if (other.CompareTag("Player"))
         {
             TryProceedToNextScene();
         }
     }
 
-    // Method to attempt to proceed to the next scene.
     public void TryProceedToNextScene()
     {
-        if (!isLocked)
+        // The new logic: Check the inventory directly!
+        if (inventoryManager != null && inventoryManager.HasItem(requiredItem))
         {
             ProceedToNextScene();
         }
         else
         {
-            Debug.Log("The door is locked. You need to find something first!");
-            // Optionally, display a UI message to the player: "Door is locked!"
+            Debug.Log("The door is locked. You are missing the required item!");
+            // You can show a UI message here, like "Requires Gun"
         }
     }
 
-    // Loads the next scene instantly.
     public void ProceedToNextScene()
     {
         if (!string.IsNullOrEmpty(nextSceneName))
         {
-            Debug.Log($"Proceeding to scene: {nextSceneName}");
             SceneManager.LoadScene(nextSceneName);
         }
-        else
-        {
-            Debug.LogError($"DoorController on {gameObject.name}: Cannot load next scene. nextSceneName is empty or null.");
-        }
-    }
-
-    // Method to unlock the door.
-    public void UnlockDoor()
-    {
-        isLocked = false;
-        Debug.Log("Door unlocked!");
-        // Optionally, play an unlock sound or visual effect.
     }
 }

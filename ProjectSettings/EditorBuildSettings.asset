@@ -18,9 +18,30 @@ EditorBuildSettings:
     path: Assets/Scenes/MainScene.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
   - enabled: 1
-    path: Assets/Scenes/Red Door/1.unity
+    path: Assets/Scenes/Red Door/RedDoor2.unity
+    guid: c16a415e097c05048a652f24f394cd09
+  - enabled: 1
+    path: Assets/Scenes/Red Door/RedDoor1.unity
     guid: 125f57b631a160f4c9da54b7418c1cbf
   - enabled: 1
     path: Assets/Scenes/Main Menu/MainMenu.unity
     guid: fc0ecc8ee9a4063499fb7034d891662a
+  - enabled: 1
+    path: Assets/Scenes/Blue Door/Bluedoor 1.unity
+    guid: 944104a043aa3e643a858e41574577c7
+  - enabled: 1
+    path: Assets/Scenes/Blue Door/Bluedoor 2.unity
+    guid: 7273af850a41dd447a7f12afea494d0b
+  - enabled: 1
+    path: Assets/Scenes/Green Door/Greendoor 1.unity
+    guid: bfcba0c4188a4334ba715311b92ab7f4
+  - enabled: 1
+    path: Assets/Scenes/Green Door/Greendoor 2.unity
+    guid: cee894c6bb855ef469175e0893507da1
+  - enabled: 1
+    path: Assets/Scenes/Yellow Door/Yellowdoor 1.unity
+    guid: c0f05216003952e45a6b3312534304c0
+  - enabled: 1
+    path: Assets/Scenes/Yellow Door/Yellowdoor 2.unity
+    guid: 4fdb8d54fb60ca44a85dac1a28f269e8
   m_configObjects: {}

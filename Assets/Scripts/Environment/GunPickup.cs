@@ -1,114 +1,40 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class GunPickup : MonoBehaviour
+// It now implements the IInteractable interface
+public class GunPickup : MonoBehaviour, IInteractable
 {
-    private bool isPickedUp = false;
-    // Store references to components to avoid repeated GetComponent calls
-    private MeshRenderer gunMeshRenderer;
-    private BoxCollider gunBoxCollider;
-
-    void Awake() // Awake is called before Start, good for getting component references
-    {
-        // MODIFIED: Use GetComponentInChildren to find the MeshRenderer on this or any child.
-        gunMeshRenderer = GetComponentInChildren<MeshRenderer>();
-        // MODIFIED: Use GetComponentInChildren to find the BoxCollider on this or any child.
-        gunBoxCollider = GetComponentInChildren<BoxCollider>();
-
-        if (gunMeshRenderer == null)
-        {
-            Debug.LogError("GunPickup: MeshRenderer component not found on " + gameObject.name + " or its children in Awake!");
-        }
-        if (gunBoxCollider == null)
-        {
-            Debug.LogError("GunPickup: BoxCollider component not found on " + gameObject.name + " or its children in Awake!");
-        }
-    }
+    // Assign your GunData asset in the Inspector
+    public ItemData itemData;
+    private InventoryManager inventoryManager;
 
     void Start()
     {
-        // Ensure the gun's mesh renderer and collider are off initially.
-        if (gunMeshRenderer != null)
+        // Find the inventory manager when the gun spawns
+        inventoryManager = FindObjectOfType<InventoryManager>();
+        if (inventoryManager == null)
         {
-            gunMeshRenderer.enabled = false;
+            Debug.LogError("GunPickup could not find an InventoryManager!");
         }
-        if (gunBoxCollider != null)
-        {
-            gunBoxCollider.enabled = false;
-        }
-
-        Debug.Log("GunPickup: Initialized. MeshRenderer and BoxCollider should be off.");
     }
 
+    // This is the method that PlayerInteraction will call when you look at the gun and press E
+    public void Interact()
+    {
+        Debug.Log("Gun picked up via raycast and added to inventory!");
+
+        // Add the item to the player's inventory
+        if (inventoryManager != null)
+        {
+            inventoryManager.AddItem(itemData);
+        }
+
+        // We disable the object so your GameFlowManager can reuse it later
+        gameObject.SetActive(false);
+    }
+
+    // This method is still needed by your GameFlowManager to make the gun visible
     public void ResetGunForSpawn()
     {
-        isPickedUp = false;
-
-        if (gunMeshRenderer != null)
-        {
-            gunMeshRenderer.enabled = true; // Make gun visible
-            Debug.Log("GunPickup: MeshRenderer enabled!");
-        }
-        else
-        {
-            Debug.LogError("GunPickup: MeshRenderer is NULL in ResetGunForSpawn! Cannot enable it.");
-        }
-
-        if (gunBoxCollider != null)
-        {
-            gunBoxCollider.enabled = true;     // Make it interactable
-            Debug.Log("GunPickup: BoxCollider enabled!");
-        }
-        else
-        {
-            Debug.LogError("GunPickup: BoxCollider is NULL in ResetGunForSpawn! Cannot enable it.");
-        }
-
-        Debug.Log("Gun is ready for pickup.");
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("Player") && !isPickedUp)
-        {
-            Debug.Log("Player entered gun pickup area. Press E to pick up.");
-        }
-    }
-
-    private void OnTriggerStay(Collider other)
-    {
-        if (other.CompareTag("Player") && !isPickedUp && Input.GetKeyDown(KeyCode.E))
-        {
-            PickUpGun();
-        }
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.CompareTag("Player") && !isPickedUp)
-        {
-            Debug.Log("Player left gun pickup area.");
-        }
-    }
-
-    private void PickUpGun()
-    {
-        isPickedUp = true;
-        Debug.Log("Gun picked up!");
-
-        if (GameFlowManager.Instance != null)
-        {
-            GameFlowManager.Instance.UnlockActiveDoor();
-        }
-        else
-        {
-            Debug.LogError("GameFlowManager.Instance is null! Cannot unlock door.");
-        }
-
-        if (gunMeshRenderer != null) gunMeshRenderer.enabled = false;
-        if (gunBoxCollider != null) gunBoxCollider.enabled = false;
-
-        Debug.Log("GunPickup: Gun hidden and collider disabled after pickup.");
+        // This method can be empty, its main purpose is to be called by the manager
     }
 }
