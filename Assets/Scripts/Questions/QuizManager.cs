@@ -22,6 +22,7 @@ public class QuizManager : MonoBehaviour
     public InventoryManager inventoryManager;
     public int penaltyDamage = 10;
     public ItemData[] allPossibleRewards;
+    public GameObject playerHudCanvas;
 
     private Question currentQuestion;
     // This delegate will store the action to perform on a correct answer (e.g., show rewards OR load scene).
@@ -45,6 +46,12 @@ public class QuizManager : MonoBehaviour
     /// <param name="requiresKey">Set to true if this quiz costs a key to attempt.</param>
     public void StartQuiz(Question[] questions, Action successCallback, bool requiresKey)
     {
+        Time.timeScale = 0f; // This freezes all gameplay, animations, and physics
+        if (playerHudCanvas != null)
+        {
+            playerHudCanvas.SetActive(false);
+        }
+
         // Only consume a key if the quiz requires one.
         if (requiresKey)
         {
@@ -53,6 +60,7 @@ public class QuizManager : MonoBehaviour
                 inventoryManager.ConsumeKey();
             }
         }
+       
 
         // Store the action we need to run if the answer is correct.
         onQuizSuccess = successCallback;
@@ -71,6 +79,8 @@ public class QuizManager : MonoBehaviour
         feedbackText.text = "";
     }
 
+    // Inside QuizManager.cs
+
     private void AnswerSelected(int index)
     {
         // Disable all answer buttons to prevent multiple clicks.
@@ -79,13 +89,8 @@ public class QuizManager : MonoBehaviour
         if (index == currentQuestion.correctAnswerIndex)
         {
             feedbackText.text = "Correct!";
-            // On success, we invoke the stored callback action.
-            // This could be showing rewards, loading a scene, or something else.
-            if (onQuizSuccess != null)
-            {
-                // We add a short delay so the player can read the "Correct!" feedback.
-                Invoke(nameof(ExecuteSuccessAction), 1f);
-            }
+            // We now start a coroutine that can wait even when time is paused.
+            StartCoroutine(CorrectAnswerRoutine());
         }
         else
         {
@@ -94,8 +99,8 @@ public class QuizManager : MonoBehaviour
             {
                 playerHealth.TakeDamage(penaltyDamage);
             }
-            // Close the quiz after a delay.
-            Invoke(nameof(EndQuiz), 2f);
+            // Start the other coroutine for an incorrect answer.
+            StartCoroutine(IncorrectAnswerRoutine());
         }
     }
 
@@ -106,6 +111,13 @@ public class QuizManager : MonoBehaviour
 
     private void EndQuiz()
     {
+        Time.timeScale = 1f; // This unfreezes the game
+        if (playerHudCanvas != null)
+        {
+            playerHudCanvas.SetActive(true);
+            Debug.Log("The game unfreezes");
+        }
+
         if (inventoryManager != null)
         {
             inventoryManager.inventoryLocked = false;
@@ -116,6 +128,9 @@ public class QuizManager : MonoBehaviour
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+       
+
     }
 
     private void DisplayNewQuestion(Question[] questions)
@@ -173,6 +188,26 @@ public class QuizManager : MonoBehaviour
         {
             inventoryManager.AddItem(reward);
         }
+        EndQuiz();
+    }
+
+    // Add these two new methods to your QuizManager.cs script
+
+    private System.Collections.IEnumerator CorrectAnswerRoutine()
+    {
+        // This waits for 1 second of REAL time, ignoring Time.timeScale.
+        yield return new WaitForSecondsRealtime(1f);
+
+        // After waiting, it executes the success action.
+        ExecuteSuccessAction();
+    }
+
+    private System.Collections.IEnumerator IncorrectAnswerRoutine()
+    {
+        // This waits for 2 seconds of REAL time.
+        yield return new WaitForSecondsRealtime(2f);
+
+        // After waiting, it ends the quiz and unfreezes the game.
         EndQuiz();
     }
 }

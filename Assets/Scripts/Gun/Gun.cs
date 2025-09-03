@@ -9,7 +9,10 @@ public class Gun : MonoBehaviour
     public int clipSize = 12;
     private int currentAmmoInClip;
     public int maxReserveAmmo = 60;
-    private int currentReserveAmmo;
+    private int currentReserveAmmo; 
+    public float range = 100f;
+    public float spreadAngle = 5.0f;
+    public int pelletsPerShot = 1;
 
     [Header("Reloading")]
     public float reloadTime = 2f;
@@ -31,41 +34,49 @@ public class Gun : MonoBehaviour
     // This will be found automatically at runtime
     private TextMeshProUGUI ammoText;
 
+    void Awake()
+    {
+        // Initialize ammo counts as soon as the gun is created.
+        currentAmmoInClip = clipSize;
+        currentReserveAmmo = maxReserveAmmo;
+    }
     void Start()
     {
-        currentAmmoInClip = clipSize;
-        currentReserveAmmo = maxReserveAmmo; // Start with full reserve ammo
+        
 
         if (playerCamera == null)
         {
             playerCamera = Camera.main;
         }
 
-        // Find the Ammo UI Text in the scene by its tag
-        GameObject ammoTextObject = GameObject.FindGameObjectWithTag("AmmoUI");
-        if (ammoTextObject != null)
+    }
+    // This new public method will be called by the InventoryManager.
+    public void Initialize(TextMeshProUGUI ammoTextUI)
+    {
+        ammoText = ammoTextUI;
+        if (ammoText != null)
         {
-            ammoText = ammoTextObject.GetComponent<TextMeshProUGUI>();
-            ammoText.enabled = true; // Enable the text component
+            ammoText.enabled = true; // Enable the text component.
             UpdateAmmoUI();
         }
         else
         {
-            Debug.LogWarning("Could not find object with 'AmmoUI' tag. Ammo display will not work.");
+            Debug.LogWarning("QuizManager: Could not find 'AmmoUI' tag. Ammo display will not work.");
         }
     }
 
-    void OnDestroy()
-    {
-        // Hide the ammo UI when this gun is unequipped/destroyed
-        if (ammoText != null)
-        {
-            ammoText.enabled = false;
-        }
-    }
+
 
     void Update()
     {
+        // --- NEW SAFETY CHECK ---
+        // Only allow shooting/reloading if the gun is equipped (is a child of the player's hand).
+        if (transform.parent == null || !transform.parent.CompareTag("PlayerHand"))
+        {
+            return; // Stop the rest of the Update method from running.
+        }
+        // --- END OF NEW CHECK ---
+
         // Prevent any actions if we are currently reloading
         if (isReloading)
         {
@@ -78,7 +89,7 @@ public class Gun : MonoBehaviour
             Shoot();
         }
 
-        // Right-click to manually reload, but only if the clip isn't full and we have reserve ammo
+        // Right-click to manually reload
         if (Input.GetMouseButtonDown(1) && currentAmmoInClip < clipSize && currentReserveAmmo > 0)
         {
             StartCoroutine(Reload());
@@ -113,60 +124,69 @@ public class Gun : MonoBehaviour
     }
 
     // Ito ang bagong Shoot() method para sa Gun.cs
+    // Inside Gun.cs
+
+    // Inside Gun.cs
+
     void Shoot()
     {
-        // --- Parehong logic para sa ammo at effects ---
+        // --- Standard ammo check (This happens only ONCE per shot) ---
         if (isReloading) return;
-
         if (currentAmmoInClip <= 0)
         {
             if (currentReserveAmmo > 0) StartCoroutine(Reload());
             return;
         }
-
-        currentAmmoInClip--;
+        currentAmmoInClip--; // Use one shell per shot
         UpdateAmmoUI();
 
+        // --- Visual & Audio Effects (Also only ONCE per shot) ---
         if (muzzleFlash != null) muzzleFlash.Play();
         if (audioSource != null && gunshotSound != null) audioSource.PlayOneShot(gunshotSound);
 
-        // --- BAGONG LOGIC PARA SA ACCURATE AIMING ---
+        // --- ACCURATE AIMING: Find the center target point ---
         RaycastHit hit;
         Vector3 targetPoint;
-
-        // Mag-cast tayo ng ray mula sa gitna ng camera
-        if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out hit))
+        if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out hit, range))
         {
-            // Kung may tinamaan, iyon ang target point natin
             targetPoint = hit.point;
         }
         else
         {
-            // Kung walang tinamaan (hal. nakatutok sa langit), gumawa tayo ng target point na malayo
-            targetPoint = playerCamera.transform.position + playerCamera.transform.forward * 1000; // 1000 units away
+            targetPoint = playerCamera.transform.position + playerCamera.transform.forward * range;
         }
 
-        // I-calculate ang direksyon mula sa dulo ng baril (firePoint) papunta sa targetPoint
-        Vector3 direction = (targetPoint - firePoint.position).normalized;
-
-        // Gumawa ng bala sa pwesto ng firePoint
-        GameObject bulletObject = Instantiate(bulletPrefab, firePoint.position, Quaternion.LookRotation(direction));
-
-        // --- Ang natitirang code ay pareho lang ---
-        Bullet bulletScript = bulletObject.GetComponent<Bullet>();
-        if (bulletScript != null)
+        // --- SHOTGUN LOGIC: Fire multiple pellets in a loop ---
+        for (int i = 0; i < pelletsPerShot; i++)
         {
-            bulletScript.SetDamage(damage);
-            bulletScript.impactEffect = impactEffectPrefab;
+            // Calculate the base direction from the gun barrel to the center target
+            Vector3 direction = (targetPoint - firePoint.position).normalized;
+
+            // --- Calculate Spread ---
+            // Create a random rotation within the spread angle
+            Quaternion spreadRotation = Quaternion.Euler(
+                Random.Range(-spreadAngle, spreadAngle),
+                Random.Range(-spreadAngle, spreadAngle),
+                0
+            );
+
+            // Apply the random rotation to the base direction
+            Vector3 finalDirection = spreadRotation * direction;
+
+            // --- Create the Bullet ---
+            // Create the bullet at the gun's fire point
+            GameObject bulletObject = Instantiate(bulletPrefab, firePoint.position, Quaternion.LookRotation(finalDirection));
+
+            // Pass damage value to the bullet
+            Bullet bulletScript = bulletObject.GetComponent<Bullet>();
+            if (bulletScript != null)
+            {
+                bulletScript.SetDamage(damage); // Each pellet does full damage in this setup
+                bulletScript.impactEffect = impactEffectPrefab;
+            }
         }
 
-        // Ang bala ay lilipad na ngayon sa eksaktong direksyon ng crosshair
-        Rigidbody rb = bulletObject.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.velocity = direction * bulletSpeed;
-        }
-
+        // Auto-reload if the clip is now empty
         if (currentAmmoInClip <= 0 && currentReserveAmmo > 0)
         {
             StartCoroutine(Reload());

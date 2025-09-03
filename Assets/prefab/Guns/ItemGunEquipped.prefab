@@ -120,6 +120,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   damage: 10
+  clipSize: 12
+  maxReserveAmmo: 60
+  range: 100
+  spreadAngle: 0
+  pelletsPerShot: 1
+  reloadTime: 2
   bulletPrefab: {fileID: 3758176601522542307, guid: 8e9ba506f2dc0384b8177b5baefffa99, type: 3}
   firePoint: {fileID: 7986172587931935708}
   bulletSpeed: 50
@@ -128,6 +134,7 @@ MonoBehaviour:
   impactEffectPrefab: {fileID: 0}
   audioSource: {fileID: 0}
   gunshotSound: {fileID: 0}
+  reloadSound: {fileID: 0}
 --- !u!1 &2554662332130176477
 GameObject:
   m_ObjectHideFlags: 0

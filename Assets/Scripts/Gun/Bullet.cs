@@ -4,8 +4,8 @@ using UnityEngine;
 
 public class Bullet : MonoBehaviour
 {
-    public float speed = 100f;        // Bullet travel speed
-    public float lifeTime = 3f;       // Time before auto-destroy
+    public float speed = 60f;        // Bullet travel speed
+    public float lifeTime = 2f;       // Time before auto-destroy
     public GameObject impactEffect;   // Explosion / impact prefab
 
     private float damage;             // Damage value set by Gun script

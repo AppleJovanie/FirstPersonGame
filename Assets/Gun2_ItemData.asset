@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ec83ca46209becd4998c2bf82b4c9eab, type: 3}
-  m_Name: ItemGun2
+  m_Name: Gun2_ItemData
   m_EditorClassIdentifier: 
-  itemName: Gun2
-  itemSprite: {fileID: 21300000, guid: 3d42b5ef33689af43a3e6dccb8b02805, type: 3}
-  itemDescription: Item Gun 2
+  itemName: Shotgun
+  itemSprite: {fileID: 21300000, guid: 4ac11d82c78c7d349a4b9c048eb280e0, type: 3}
+  itemDescription: Slow-firing but brutal. Excels in close-quarters combat
   type: 0
-  itemPrefab: {fileID: 2310607646174720696, guid: e4455e7b82ce0fb4cbed47bf94231c24, type: 3}
+  itemPrefab: {fileID: 7763631329982019969, guid: c51624d0a84404b4b8476aa2ef94a83b, type: 3}
   healAmount: 0
   shieldAmount: 0
   ammoAmount: 0

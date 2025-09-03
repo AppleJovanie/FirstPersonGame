@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ec83ca46209becd4998c2bf82b4c9eab, type: 3}
-  m_Name: GunData
+  m_Name: ShieldBooster_Item
   m_EditorClassIdentifier: 
-  itemName: ItemGun
-  itemSprite: {fileID: 21300000, guid: 42a0f13280af071409042e34ac5d197e, type: 3}
-  itemDescription: A standard-issue sidearm. Reliable and effective at close range
-  type: 0
-  itemPrefab: {fileID: 1687512304519051879, guid: db7dcacf6d7331543aa7e7182d6e23d7, type: 3}
+  itemName: Shield Booster
+  itemSprite: {fileID: 21300000, guid: 4410ad664108024488c3b679a5af9e64, type: 3}
+  itemDescription: A consumable that restores 30 shield points.
+  type: 1
+  itemPrefab: {fileID: 0}
   healAmount: 0
-  shieldAmount: 0
+  shieldAmount: 30
   ammoAmount: 0
   clueText: 

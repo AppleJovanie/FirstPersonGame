@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 940fcb74d3559464abf91d2076f30654
+guid: 8755f44b0812f5a41b93161f037081ce
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
@@ -8,7 +8,7 @@ ModelImporter:
       type: UnityEngine:Texture2D
       assembly: UnityEngine.CoreModule
       name: gun2
-    second: {fileID: 2800000, guid: df0870fdd6b26784a8aeba4d389a4e16, type: 3}
+    second: {fileID: 2800000, guid: cbf8b3fde839c6145b1b800cdb2055d6, type: 3}
   materials:
     materialImportMode: 2
     materialName: 0

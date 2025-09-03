@@ -2467,6 +2467,11 @@ MonoBehaviour:
   m_IgnoreFromBuild: 0
   m_ApplyToChildren: 1
   m_AffectedAgents: ffffffff
+--- !u!1 &636318313 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2236537940394493349, guid: e6784d6bb24977549846449cfbec70ff, type: 3}
+  m_PrefabInstance: {fileID: 2127704829}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &643271835
 GameObject:
   m_ObjectHideFlags: 0
@@ -6465,6 +6470,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1483105159}
     - target: {fileID: 339734338305352578, guid: 2a694a4cf72b24a4897834a64bbe48dd, type: 3}
+      propertyPath: playerHudCanvas
+      value: 
+      objectReference: {fileID: 636318313}
+    - target: {fileID: 339734338305352578, guid: 2a694a4cf72b24a4897834a64bbe48dd, type: 3}
       propertyPath: inventoryManager
       value: 
       objectReference: {fileID: 2025937056}
@@ -6474,7 +6483,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 339734338305352578, guid: 2a694a4cf72b24a4897834a64bbe48dd, type: 3}
       propertyPath: rewardButtons.Array.size
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 339734338305352578, guid: 2a694a4cf72b24a4897834a64bbe48dd, type: 3}
       propertyPath: answerButtons.Array.data[0]
@@ -6500,6 +6509,18 @@ PrefabInstance:
       propertyPath: rewardButtons.Array.data[1]
       value: 
       objectReference: {fileID: 1483105151}
+    - target: {fileID: 339734338305352578, guid: 2a694a4cf72b24a4897834a64bbe48dd, type: 3}
+      propertyPath: rewardButtons.Array.data[2]
+      value: 
+      objectReference: {fileID: 1798599404}
+    - target: {fileID: 339734338305352578, guid: 2a694a4cf72b24a4897834a64bbe48dd, type: 3}
+      propertyPath: allPossibleRewards.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 339734338305352578, guid: 2a694a4cf72b24a4897834a64bbe48dd, type: 3}
+      propertyPath: allPossibleRewards.Array.data[2]
+      value: 
+      objectReference: {fileID: 11400000, guid: 1c0d526e83c67aa43bfd19e77ee4ebca, type: 2}
     - target: {fileID: 2236225440054637257, guid: 2a694a4cf72b24a4897834a64bbe48dd, type: 3}
       propertyPath: m_LocalPosition.x
       value: -31.526154
@@ -7441,6 +7462,17 @@ MonoBehaviour:
   m_IgnoreFromBuild: 0
   m_ApplyToChildren: 1
   m_AffectedAgents: ffffffff
+--- !u!114 &1798599404 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6501370271478788120, guid: 9c86e435c45a77a44afce879492f331e, type: 3}
+  m_PrefabInstance: {fileID: 1483105149}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b2d14f611d7ae845899dfd7b23a44fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &1815585785
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7748,6 +7780,11 @@ MonoBehaviour:
   m_IgnoreFromBuild: 0
   m_ApplyToChildren: 1
   m_AffectedAgents: ffffffff
+--- !u!4 &1882486682 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3085911327735081384, guid: 27ff93709477c0f468d78d359c71945f, type: 3}
+  m_PrefabInstance: {fileID: 1695669383}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1914230056
 GameObject:
   m_ObjectHideFlags: 0
@@ -8241,6 +8278,10 @@ PrefabInstance:
       propertyPath: playerHealth
       value: 
       objectReference: {fileID: 1695669384}
+    - target: {fileID: 140050035462714372, guid: 7baae09e14b6e8448b7e4ce5580a6f18, type: 3}
+      propertyPath: handTransform
+      value: 
+      objectReference: {fileID: 1882486682}
     - target: {fileID: 1784216064488164798, guid: 7baae09e14b6e8448b7e4ce5580a6f18, type: 3}
       propertyPath: m_LocalPosition.x
       value: -10.513011

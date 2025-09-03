@@ -10,8 +10,13 @@ public class InventoryManager : MonoBehaviour
     // The persistent list that stores the actual item data
     private List<ItemData> items = new List<ItemData>();
 
+
     // The list of UI slot components currently in the scene
     private List<InventorySLot> itemSlots = new List<InventorySLot>();
+
+    private List<ItemData> equippableItems = new List<ItemData>();
+    // This tracks which weapon from the list is currently active. -1 means nothing is equipped.
+    private int currentEquippableIndex = -1;
 
     [Header("UI Prefabs & Containers")]
     public GameObject itemSlotPrefab; // Assign your ItemSlot prefab here
@@ -35,11 +40,13 @@ public class InventoryManager : MonoBehaviour
 
     [Header("External Managers")] // A new header for organization
     public Filelogmanager fileLogUIManager;
+    private TextMeshProUGUI ammoText;
 
     private GameObject equippedItemObject;
 
     // --- NEW: This flag will be controlled by the QuizManager ---
     public bool inventoryLocked = false;
+   
 
     // --- (Awake, OnEnable, OnDisable methods are for persistence) ---
     private void Awake()
@@ -54,6 +61,12 @@ public class InventoryManager : MonoBehaviour
     // Reconnects to the UI in each new scene
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        GameObject ammoTextObject = GameObject.FindGameObjectWithTag("AmmoUI");
+        if (ammoTextObject != null)
+        {
+            ammoText = ammoTextObject.GetComponent<TextMeshProUGUI>();
+            ammoText.enabled = false; // <-- ADD THIS LINE to ensure it's hidden
+        }
 
         ClearAllKeys();
 
@@ -137,31 +150,78 @@ public class InventoryManager : MonoBehaviour
     public void AddItem(ItemData itemToAdd)
     {
         items.Add(itemToAdd);
+
+        // NEW: If the item is a weapon, add it to our weapon list
+        if (itemToAdd.type == ItemType.Equippable)
+        {
+            equippableItems.Add(itemToAdd);
+        }
+
         RepopulateUI();
     }
 
     public void RemoveItem(ItemData itemToRemove)
     {
         items.Remove(itemToRemove);
+
+        // NEW: If the removed item was a weapon, remove it from our weapon list
+        if (itemToRemove.type == ItemType.Equippable)
+        {
+            equippableItems.Remove(itemToRemove);
+        }
+
         RepopulateUI();
     }
 
     public bool HasItem(ItemData itemToCheck) { return items.Contains(itemToCheck); }
     public void ClearInventory() { items.Clear(); if (InventoryMenu != null) { RepopulateUI(); } }
 
+    // Inside InventoryManager.cs
+
     void Update()
     {
         // --- THIS IS THE LOCK ---
-        // If the inventory is locked by the quiz, ignore all input.
         if (inventoryLocked)
         {
             return;
         }
 
+        // --- Inventory Menu Logic ---
         if (Input.GetButtonDown("Inventory")) { ToggleInventory(); }
         if (menuActivated && selectedItem != null && Input.GetKeyDown(KeyCode.E))
         {
             UseItem(selectedItem);
+        }
+
+        // --- NEW: SCROLL WHEEL WEAPON SWITCHING ---
+        // We only check for the scroll wheel if the inventory menu is CLOSED.
+        if (!menuActivated)
+        {
+            float scroll = Input.GetAxis("Mouse ScrollWheel");
+
+            // Check if the player scrolled and has more than one weapon to switch between.
+            if (scroll != 0 && equippableItems.Count > 1)
+            {
+                if (scroll > 0f) // Scrolled up
+                {
+                    currentEquippableIndex++;
+                    if (currentEquippableIndex >= equippableItems.Count)
+                    {
+                        currentEquippableIndex = 0; // Wrap around to the first weapon
+                    }
+                }
+                else if (scroll < 0f) // Scrolled down
+                {
+                    currentEquippableIndex--;
+                    if (currentEquippableIndex < 0)
+                    {
+                        currentEquippableIndex = equippableItems.Count - 1; // Wrap around to the last weapon
+                    }
+                }
+
+                // Call the method to physically equip the newly selected weapon
+                EquipWeaponByIndex(currentEquippableIndex);
+            }
         }
     }
 
@@ -172,17 +232,29 @@ public class InventoryManager : MonoBehaviour
         else if (itemToUse.type == ItemType.Readable) { ReadItem(itemToUse); }
     }
 
+    // Inside InventoryManager.cs
+
+    // Replace your old EquipItem method with this new version
     void EquipItem(ItemData itemToEquip)
     {
-        if (equippedItemObject != null) { Destroy(equippedItemObject); }
-        if (itemToEquip.itemPrefab != null && handTransform != null)
+        // Find the index of this weapon in our equippable list
+        int weaponIndex = equippableItems.IndexOf(itemToEquip);
+
+        if (weaponIndex != -1)
         {
-            equippedItemObject = Instantiate(itemToEquip.itemPrefab, handTransform);
-            currentlyEquippedGun = equippedItemObject.GetComponent<Gun>();
+            // If it's the same weapon, do nothing to prevent re-equipping.
+            if (weaponIndex == currentEquippableIndex)
+            {
+                ToggleInventory();
+                return;
+            }
+
+            currentEquippableIndex = weaponIndex;
+            EquipWeaponByIndex(currentEquippableIndex);
         }
+
         ToggleInventory();
     }
-
     void ConsumeItem(ItemData itemToConsume)
     {
         if (playerHealth != null)
@@ -289,6 +361,38 @@ public class InventoryManager : MonoBehaviour
         selectedItem = null;
         if (descriptionPanel != null) descriptionPanel.SetActive(false);
         if (usePromptText != null) usePromptText.gameObject.SetActive(false);
+    }
+    // Add this new method to InventoryManager.cs
+
+    private void EquipWeaponByIndex(int index)
+    {
+        // Make sure the index is valid
+        if (index < 0 || index >= equippableItems.Count) return;
+
+        // Destroy the old weapon if one exists
+        if (equippedItemObject != null)
+        {
+            Destroy(equippedItemObject);
+        }
+
+        // Hide the ammo UI by default
+        if (ammoText != null)
+        {
+            ammoText.enabled = false;
+        }
+
+        // Get the ItemData for the new weapon
+        ItemData weaponToEquip = equippableItems[index];
+
+        // Create the new weapon instance
+        equippedItemObject = Instantiate(weaponToEquip.itemPrefab, handTransform);
+        currentlyEquippedGun = equippedItemObject.GetComponent<Gun>();
+
+        // Pass the ammo UI reference to the new gun
+        if (currentlyEquippedGun != null && ammoText != null)
+        {
+            currentlyEquippedGun.Initialize(ammoText);
+        }
     }
 }
 
