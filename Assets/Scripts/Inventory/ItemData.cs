@@ -1,7 +1,7 @@
 using UnityEngine;
 
 // This defines the different types of items we can have.
-public enum ItemType { Equippable, Consumable, Readable }
+public enum ItemType { Equippable, Consumable, Readable, Key }
 
 [CreateAssetMenu(fileName = "New ItemData", menuName = "Inventory/Item Data")]
 public class ItemData : ScriptableObject

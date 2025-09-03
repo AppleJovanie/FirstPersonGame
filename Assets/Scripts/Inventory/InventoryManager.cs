@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
+using System.Linq;
 
 public class InventoryManager : MonoBehaviour
 {
@@ -53,6 +54,9 @@ public class InventoryManager : MonoBehaviour
     // Reconnects to the UI in each new scene
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+
+        ClearAllKeys();
+
         Debug.Log("New scene loaded. Re-linking references...");
 
         // Find player references
@@ -250,7 +254,36 @@ public class InventoryManager : MonoBehaviour
         descriptionItemImage.sprite = itemToSelect.itemSprite;
         itemDescriptionText.text = itemToSelect.itemDescription;
     }
+    public bool HasKey()
+    {
+        // Checks if any item in the inventory has the type "Key"
+        return items.Any(item => item.type == ItemType.Key);
+    }
 
+    public void ConsumeKey()
+    {
+        // Find the first item in the list that is a key
+        ItemData keyToRemove = items.FirstOrDefault(item => item.type == ItemType.Key);
+
+        // If a key was found, remove it
+        if (keyToRemove != null)
+        {
+            Debug.Log("Consumed a key: " + keyToRemove.itemName);
+            RemoveItem(keyToRemove); // Use your existing RemoveItem method
+        }
+    }
+
+    public void ClearAllKeys()
+    {
+        // This removes ALL items of type "Key" from the inventory list
+        int keysRemoved = items.RemoveAll(item => item.type == ItemType.Key);
+
+        if (keysRemoved > 0)
+        {
+            Debug.Log("Cleared " + keysRemoved + " keys from inventory for the new scene.");
+            RepopulateUI(); // Update the UI to show the keys are gone
+        }
+    }
     void ClearDescriptionPanel()
     {
         selectedItem = null;

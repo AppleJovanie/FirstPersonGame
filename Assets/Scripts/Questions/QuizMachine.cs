@@ -4,45 +4,51 @@ using UnityEngine;
 
 public class QuizMachine : MonoBehaviour, IInteractable
 {
-    // A list of all possible questions for this machine
     public Question[] questions;
-
-    // Add this new variable to track the machine's state
-    private bool hasBeenUsed = false;
+    // This can now be read by other scripts, but only changed by this one.
+    public bool hasBeenUsed { get; private set; } = false;
 
     private QuizManager quizManager;
+    private InventoryManager inventoryManager; // <-- NEW: Add reference to inventory
 
     void Start()
     {
-        // Find the main Quiz Manager in the scene
         quizManager = FindObjectOfType<QuizManager>();
+        inventoryManager = FindObjectOfType<InventoryManager>(); // <-- NEW: Find the inventory manager
+
         if (quizManager == null)
-        {
-            Debug.LogError("QuizMachine cannot find a QuizManager in the scene!");
-        }
+            Debug.LogError("QuizMachine cannot find a QuizManager!");
+        if (inventoryManager == null)
+            Debug.LogError("QuizMachine cannot find an InventoryManager!");
     }
 
-    // This is called by your PlayerInteraction script when you press 'E'
+    // --- THIS METHOD IS COMPLETELY REWRITTEN ---
     public void Interact()
     {
-        // Only interact if the machine has not been used yet
-        if (!hasBeenUsed)
+        if (hasBeenUsed)
         {
-            Debug.Log("Interacting with the Quiz Machine.");
-            if (quizManager != null)
-            {
-                // Tell the QuizManager to start a new quiz
-                quizManager.StartQuiz(this);
+            Debug.Log("This quiz machine has already been completed.");
+            return;
+        }
 
-                // Set the flag to true so it can't be used again
-                hasBeenUsed = true;
-            }
-        }
-        else
-        {
-            // Optional: Log a message that the machine is unavailable
-            Debug.Log("This quiz machine has already been used.");
-        }
+        // The key check has been removed. The player can always interact if it hasn't been used.
+        Debug.Log("Player is using a free quiz machine.");
+
+        // We now pass 'false' to indicate this quiz does NOT require a key.
+        quizManager.StartQuiz(questions, HandleMachineSuccess, false);
+
+    }
+
+    private void HandleMachineSuccess()
+    {
+        MarkAsCompleted();
+        quizManager.ShowRandomRewards();
+    }
+
+    // This method can now be called by the QuizManager after a correct answer.
+    public void MarkAsCompleted()
+    {
+        hasBeenUsed = true;
     }
 
     public Question GetRandomQuestion()
