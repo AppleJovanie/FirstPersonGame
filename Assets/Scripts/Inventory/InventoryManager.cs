@@ -6,8 +6,17 @@ using TMPro;
 
 public class InventoryManager : MonoBehaviour
 {
+    // The persistent list that stores the actual item data
     private List<ItemData> items = new List<ItemData>();
-    public List<InventorySLot> itemSlots = new List<InventorySLot>();
+
+    // The list of UI slot components currently in the scene
+    private List<InventorySLot> itemSlots = new List<InventorySLot>();
+
+    [Header("UI Prefabs & Containers")]
+    public GameObject itemSlotPrefab; // Assign your ItemSlot prefab here
+    public Transform slotsContainer;  // The parent object for the slots (e.g., InventorySlots panel)
+
+    // --- The rest of your variables for UI, Player, and State ---
     public ItemData selectedItem { get; private set; }
     public GameObject InventoryMenu;
     private bool menuActivated;
@@ -16,69 +25,108 @@ public class InventoryManager : MonoBehaviour
     public GameObject descriptionPanel;
     public Image descriptionItemImage;
     public TextMeshProUGUI itemDescriptionText;
-    public TextMeshProUGUI equipPromptText;
+    public TextMeshProUGUI usePromptText;
+
+    [Header("Player References")]
     public Transform handTransform;
+    public PlayerHealthShield playerHealth;
+    public Gun currentlyEquippedGun;
+
+    [Header("External Managers")] // A new header for organization
+    public Filelogmanager fileLogUIManager;
+
     private GameObject equippedItemObject;
 
+    // --- NEW: This flag will be controlled by the QuizManager ---
+    public bool inventoryLocked = false;
+
+    // --- (Awake, OnEnable, OnDisable methods are for persistence) ---
     private void Awake()
     {
         InventoryManager[] managers = FindObjectsOfType<InventoryManager>();
         if (managers.Length > 1) { Destroy(gameObject); }
         else { DontDestroyOnLoad(gameObject); }
     }
-
     void OnEnable() { SceneManager.sceneLoaded += OnSceneLoaded; }
     void OnDisable() { SceneManager.sceneLoaded -= OnSceneLoaded; }
 
-    // --- THIS IS THE MODIFIED SECTION ---
+    // Reconnects to the UI in each new scene
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        GameObject playerHandObject = GameObject.FindGameObjectWithTag("PlayerHand");
-        if (playerHandObject != null)
-            handTransform = playerHandObject.transform;
-        else
-            handTransform = null;
+        Debug.Log("New scene loaded. Re-linking references...");
 
-        GameObject inventoryUIObject = GameObject.FindGameObjectWithTag("InventoryUI");
-        if (inventoryUIObject != null)
+        // Find player references
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        if (playerObject != null)
         {
-            // Use the already assigned InventoryMenu (don’t search for it again)
-            // If you want, you can still fetch it just in case:
-            if (InventoryMenu == null)
-                InventoryMenu = inventoryUIObject.transform.Find("InventoryMenu").gameObject;
+            Debug.Log("Found Player object: " + playerObject.name);
 
-            // ✅ Fix: look inside InventoryMenu instead of directly under InventoryUI
-            Transform descriptionPanelTransform = InventoryMenu.transform.Find("InventoryDescriptionPanel");
-            if (descriptionPanelTransform != null)
+            // IMPORTANT: The path must be exact.
+            Transform hand = playerObject.transform.Find("Main Camera/HandTransform");
+            if (hand != null)
             {
-                descriptionPanel = descriptionPanelTransform.gameObject;
-                descriptionItemImage = descriptionPanelTransform.Find("ItemImage").GetComponent<Image>();
-
-                Transform itemDescriptionContainer = descriptionPanelTransform.Find("ItemDescription");
-                itemDescriptionText = itemDescriptionContainer.Find("ItemDescriptionText").GetComponent<TMPro.TextMeshProUGUI>();
-                equipPromptText = itemDescriptionContainer.Find("EquipPromptText").GetComponent<TMPro.TextMeshProUGUI>();
+                handTransform = hand;
+                Debug.Log("Successfully found and assigned HandTransform.");
+            }
+            else
+            {
+                // This error will tell you the path is wrong.
+                Debug.LogError("Could not find 'HandTransform' as a child of 'Main Camera' on the Player object!");
             }
 
-            // ✅ Fix: get slots directly under InventorySlots
-            itemSlots.Clear();
-            Transform slotsContainer = InventoryMenu.transform.Find("InventorySlots");
-            if (slotsContainer != null)
-                itemSlots.AddRange(slotsContainer.GetComponentsInChildren<InventorySLot>());
-
-            foreach (InventorySLot slot in itemSlots)
-                slot.Setup(this);
-
-            RepopulateUI();
-            Debug.Log("InventoryManager has re-connected and repopulated UI in the new scene.");
+            playerHealth = playerObject.GetComponent<PlayerHealthShield>();
+            if (playerHealth == null)
+            {
+                Debug.LogWarning("Player object does not have a PlayerHealthShield component.");
+            }
         }
+        else
+        {
+            // This error means your player is not tagged correctly.
+            Debug.LogError("COULD NOT FIND ANY GAMEOBJECT WITH THE 'Player' TAG IN THE NEW SCENE!");
+        }
+
+        // (The rest of your code for finding the InventoryCanvas...)
+        // ...
+        // ... it's a good idea to add similar null checks for your UI elements too.
+        GameObject inventoryCanvas = GameObject.Find("InventoryCanvas");
+        if (inventoryCanvas != null)
+        {
+            // Your existing code for finding UI elements...
+        }
+        else
+        {
+            Debug.LogError("COULD NOT FIND 'InventoryCanvas' IN THE NEW SCENE!");
+        }
+
+        // Finally, repopulate the UI
+        RepopulateUI();
     }
 
     void RepopulateUI()
     {
-        foreach (InventorySLot slot in itemSlots) { slot.ClearSlot(); }
-        for (int i = 0; i < items.Count; i++)
+        if (slotsContainer == null) return;
+
+        while (itemSlots.Count < items.Count)
         {
-            if (i < itemSlots.Count) { itemSlots[i].DisplayItem(items[i]); }
+            GameObject newSlotObject = Instantiate(itemSlotPrefab, slotsContainer);
+            InventorySLot newSlot = newSlotObject.GetComponent<InventorySLot>();
+            newSlot.Setup(this);
+            itemSlots.Add(newSlot);
+        }
+
+        for (int i = 0; i < itemSlots.Count; i++)
+        {
+            if (i < items.Count)
+            {
+                itemSlots[i].DisplayItem(items[i]);
+                itemSlots[i].gameObject.SetActive(true);
+            }
+            else
+            {
+                itemSlots[i].ClearSlot();
+                itemSlots[i].gameObject.SetActive(false);
+            }
         }
     }
 
@@ -88,26 +136,78 @@ public class InventoryManager : MonoBehaviour
         RepopulateUI();
     }
 
-    public bool HasItem(ItemData itemToCheck)
+    public void RemoveItem(ItemData itemToRemove)
     {
-        return items.Contains(itemToCheck);
+        items.Remove(itemToRemove);
+        RepopulateUI();
     }
 
-    public void ClearInventory()
-    {
-        items.Clear();
-        if (InventoryMenu != null) { RepopulateUI(); }
-        Debug.Log("Inventory data and UI has been cleared.");
-    }
+    public bool HasItem(ItemData itemToCheck) { return items.Contains(itemToCheck); }
+    public void ClearInventory() { items.Clear(); if (InventoryMenu != null) { RepopulateUI(); } }
 
     void Update()
     {
+        // --- THIS IS THE LOCK ---
+        // If the inventory is locked by the quiz, ignore all input.
+        if (inventoryLocked)
+        {
+            return;
+        }
+
         if (Input.GetButtonDown("Inventory")) { ToggleInventory(); }
-        if (menuActivated && selectedItem != null && Input.GetKeyDown(KeyCode.E)) { EquipItem(selectedItem); }
+        if (menuActivated && selectedItem != null && Input.GetKeyDown(KeyCode.E))
+        {
+            UseItem(selectedItem);
+        }
     }
 
+    void UseItem(ItemData itemToUse)
+    {
+        if (itemToUse.type == ItemType.Equippable) { EquipItem(itemToUse); }
+        else if (itemToUse.type == ItemType.Consumable) { ConsumeItem(itemToUse); }
+        else if (itemToUse.type == ItemType.Readable) { ReadItem(itemToUse); }
+    }
+
+    void EquipItem(ItemData itemToEquip)
+    {
+        if (equippedItemObject != null) { Destroy(equippedItemObject); }
+        if (itemToEquip.itemPrefab != null && handTransform != null)
+        {
+            equippedItemObject = Instantiate(itemToEquip.itemPrefab, handTransform);
+            currentlyEquippedGun = equippedItemObject.GetComponent<Gun>();
+        }
+        ToggleInventory();
+    }
+
+    void ConsumeItem(ItemData itemToConsume)
+    {
+        if (playerHealth != null)
+        {
+            playerHealth.Heal(itemToConsume.healAmount);
+            playerHealth.AddShield(itemToConsume.shieldAmount);
+        }
+        if (currentlyEquippedGun != null && itemToConsume.ammoAmount > 0)
+        {
+            currentlyEquippedGun.AddReserveAmmo(itemToConsume.ammoAmount);
+        }
+        RemoveItem(itemToConsume);
+        ClearDescriptionPanel();
+    }
+    void ReadItem(ItemData itemToRead)
+    {
+        if (fileLogUIManager != null)
+        {
+            // Call the manager to show the log, passing this inventory manager instance
+            fileLogUIManager.ShowLog(itemToRead, this);
+        }
+        else
+        {
+            Debug.LogError("FileLogUIManager is not assigned in the InventoryManager!");
+        }
+    }
     void ToggleInventory()
     {
+        if (InventoryMenu == null) return;
         menuActivated = !menuActivated;
         InventoryMenu.SetActive(menuActivated);
         if (menuActivated)
@@ -125,26 +225,37 @@ public class InventoryManager : MonoBehaviour
         }
     }
 
-    void EquipItem(ItemData itemToEquip)
-    {
-        if (equippedItemObject != null) { Destroy(equippedItemObject); }
-        if (itemToEquip.itemPrefab != null) { equippedItemObject = Instantiate(itemToEquip.itemPrefab, handTransform); }
-        ToggleInventory();
-    }
-
     public void SelectItem(ItemData itemToSelect)
     {
         selectedItem = itemToSelect;
+        if (descriptionPanel == null) return;
         descriptionPanel.SetActive(true);
-        equipPromptText.gameObject.SetActive(true);
-        descriptionItemImage.sprite = selectedItem.itemSprite;
-        itemDescriptionText.text = selectedItem.itemDescription;
+        if (usePromptText != null) usePromptText.gameObject.SetActive(true);
+
+        // --- MODIFY THIS PART ---
+        if (itemToSelect.type == ItemType.Equippable)
+        {
+            usePromptText.text = "Press [E] to Equip";
+        }
+        else if (itemToSelect.type == ItemType.Readable) // <-- NEW
+        {
+            usePromptText.text = "Press [E] to Read";   // <-- NEW
+        }
+        else
+        {
+            usePromptText.text = "Press [E] to Use";
+        }
+        // --- END MODIFICATION ---
+
+        descriptionItemImage.sprite = itemToSelect.itemSprite;
+        itemDescriptionText.text = itemToSelect.itemDescription;
     }
 
     void ClearDescriptionPanel()
     {
         selectedItem = null;
         if (descriptionPanel != null) descriptionPanel.SetActive(false);
-        if (equipPromptText != null) equipPromptText.gameObject.SetActive(false);
+        if (usePromptText != null) usePromptText.gameObject.SetActive(false);
     }
 }
+

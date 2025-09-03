@@ -112,26 +112,47 @@ public class Gun : MonoBehaviour
         isReloading = false;
     }
 
+    // Ito ang bagong Shoot() method para sa Gun.cs
     void Shoot()
     {
-        // Check if we have ammo in the clip or are in the middle of reloading
-        if (currentAmmoInClip <= 0 || isReloading)
+        // --- Parehong logic para sa ammo at effects ---
+        if (isReloading) return;
+
+        if (currentAmmoInClip <= 0)
         {
-            // Optionally, play an empty clip sound here
+            if (currentReserveAmmo > 0) StartCoroutine(Reload());
             return;
         }
 
         currentAmmoInClip--;
         UpdateAmmoUI();
 
-        // Play muzzle flash and gunshot sound if available
         if (muzzleFlash != null) muzzleFlash.Play();
         if (audioSource != null && gunshotSound != null) audioSource.PlayOneShot(gunshotSound);
 
-        // Create the bullet
-        GameObject bulletObject = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+        // --- BAGONG LOGIC PARA SA ACCURATE AIMING ---
+        RaycastHit hit;
+        Vector3 targetPoint;
 
-        // Pass necessary info to the bullet
+        // Mag-cast tayo ng ray mula sa gitna ng camera
+        if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out hit))
+        {
+            // Kung may tinamaan, iyon ang target point natin
+            targetPoint = hit.point;
+        }
+        else
+        {
+            // Kung walang tinamaan (hal. nakatutok sa langit), gumawa tayo ng target point na malayo
+            targetPoint = playerCamera.transform.position + playerCamera.transform.forward * 1000; // 1000 units away
+        }
+
+        // I-calculate ang direksyon mula sa dulo ng baril (firePoint) papunta sa targetPoint
+        Vector3 direction = (targetPoint - firePoint.position).normalized;
+
+        // Gumawa ng bala sa pwesto ng firePoint
+        GameObject bulletObject = Instantiate(bulletPrefab, firePoint.position, Quaternion.LookRotation(direction));
+
+        // --- Ang natitirang code ay pareho lang ---
         Bullet bulletScript = bulletObject.GetComponent<Bullet>();
         if (bulletScript != null)
         {
@@ -139,14 +160,13 @@ public class Gun : MonoBehaviour
             bulletScript.impactEffect = impactEffectPrefab;
         }
 
-        // Give the bullet its velocity
+        // Ang bala ay lilipad na ngayon sa eksaktong direksyon ng crosshair
         Rigidbody rb = bulletObject.GetComponent<Rigidbody>();
         if (rb != null)
         {
-            rb.velocity = firePoint.forward * bulletSpeed;
+            rb.velocity = direction * bulletSpeed;
         }
 
-        // --- NEW: Automatically reload if the clip is now empty ---
         if (currentAmmoInClip <= 0 && currentReserveAmmo > 0)
         {
             StartCoroutine(Reload());
@@ -160,5 +180,12 @@ public class Gun : MonoBehaviour
             // Display both the clip ammo and the total reserve ammo
             ammoText.text = $"{currentAmmoInClip} / {currentReserveAmmo}";
         }
+    }
+    // Add this method to your Gun.cs script
+    public void AddReserveAmmo(int amount)
+    {
+        currentReserveAmmo += amount;
+        UpdateAmmoUI();
+        Debug.Log($"Added {amount} ammo. New reserve: {currentReserveAmmo}");
     }
 }

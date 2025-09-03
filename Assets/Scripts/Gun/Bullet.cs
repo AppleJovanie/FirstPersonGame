@@ -11,6 +11,8 @@ public class Bullet : MonoBehaviour
     private float damage;             // Damage value set by Gun script
     private Rigidbody rb;             // Rigidbody reference
 
+    
+
     void Start()
     {
         // Get Rigidbody and push the bullet forward immediately

@@ -18,38 +18,45 @@ public class PlayerHealthShield : MonoBehaviour
     {
         currentHealth = maxHealth;
         currentShield = maxShield;
-
         UpdateUI();
     }
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.H)) TakeDamage(10);
-        if (Input.GetKeyDown(KeyCode.J)) Heal(10);
-        if (Input.GetKeyDown(KeyCode.K)) AddShield(10);
 
-    }
-
+    // --- THIS IS THE MODIFIED METHOD ---
     public void TakeDamage(int amount)
     {
+        Debug.Log($"--- Player taking {amount} incoming damage. [Current Shield: {currentShield}, Current Health: {currentHealth}] ---");
+
+        int damageToShield = 0;
+        int damageToHealth = 0;
+
+        // First, apply damage to the shield if it exists.
         if (currentShield > 0)
         {
             int shieldDamage = Mathf.Min(amount, currentShield);
             currentShield -= shieldDamage;
-            amount -= shieldDamage;
+            amount -= shieldDamage; // Reduce the remaining damage that will go to health
+            damageToShield = shieldDamage;
         }
 
+        // Then, apply any remaining damage to health.
         if (amount > 0)
         {
             currentHealth -= amount;
-            if (currentHealth <= 0)
-            {
-                currentHealth = 0;
-                Die();
-            }
+            damageToHealth = amount;
         }
 
+        Debug.Log($"Damage absorbed by shield: {damageToShield}. Damage dealt to health: {damageToHealth}.");
+        Debug.Log($"--- NEW STATS -> [Shield: {currentShield}, Health: {currentHealth}] ---");
+
+        // Update the UI with the new values.
         UpdateUI();
-        Debug.Log("TakeDamage called with: " + amount); // Add this
+
+        // Check for death after all damage is calculated.
+        if (currentHealth <= 0)
+        {
+            currentHealth = 0;
+            Die();
+        }
     }
 
     public void Heal(int amount)

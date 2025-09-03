@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec83ca46209becd4998c2bf82b4c9eab, type: 3}
+  m_Name: ItemGun2
+  m_EditorClassIdentifier: 
+  itemName: Gun2
+  itemSprite: {fileID: 21300000, guid: 3d42b5ef33689af43a3e6dccb8b02805, type: 3}
+  itemDescription: Item Gun 2
+  type: 0
+  itemPrefab: {fileID: 2310607646174720696, guid: e4455e7b82ce0fb4cbed47bf94231c24, type: 3}
+  healAmount: 0
+  shieldAmount: 0
+  ammoAmount: 0
+  clueText: 
