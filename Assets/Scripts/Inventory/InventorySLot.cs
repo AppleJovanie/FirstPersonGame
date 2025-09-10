@@ -39,11 +39,12 @@ public class InventorySLot : MonoBehaviour
     // This method will be called when the button is clicked
     public void OnSlotClicked()
     {
+        Debug.Log($"SLOT CLICKED! Item is: {(currentItem != null ? currentItem.name : "NULL")}");
         if (currentItem != null && inventoryManager != null)
         {
             // Tell the InventoryManager that this item was selected
             inventoryManager.SelectItem(currentItem);
-            Debug.Log("Thhe Item is selected");
+            Debug.Log("The Item is selected");
         }
     }
 

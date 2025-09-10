@@ -18,30 +18,66 @@ EditorBuildSettings:
     path: Assets/Scenes/MainScene.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
   - enabled: 1
-    path: Assets/Scenes/Red Door/RedDoor2.unity
-    guid: c16a415e097c05048a652f24f394cd09
-  - enabled: 1
     path: Assets/Scenes/Red Door/RedDoor1.unity
     guid: 125f57b631a160f4c9da54b7418c1cbf
   - enabled: 1
+    path: Assets/Scenes/Red Door/RedDoor2.unity
+    guid: ee651b696345bde46ab76b3583103cf3
+  - enabled: 1
+    path: Assets/Scenes/Red Door/RedDoor3.unity
+    guid: 3a58290df13d2504d9242edb57fb43d5
+  - enabled: 1
+    path: Assets/Scenes/Red Door/RedDoor4.unity
+    guid: 8093ec02e5db3a44b8d7adcdf3b5c953
+  - enabled: 1
+    path: Assets/Scenes/Red Door/RedDoor5.unity
+    guid: e1bb90ad937305c4091846bfc647668b
+  - enabled: 1
+    path: Assets/Scenes/Blue Door/Bluedoor1.unity
+    guid: 98ea9db6b320ffe45880c04285743dec
+  - enabled: 1
+    path: Assets/Scenes/Blue Door/Bluedoor2.unity
+    guid: 984d19c56ca6b774ca3b35afca1f5c94
+  - enabled: 1
+    path: Assets/Scenes/Blue Door/Bluedoor3.unity
+    guid: 923e47fe5f0e52a4e95818202b629867
+  - enabled: 1
+    path: Assets/Scenes/Blue Door/Bluedoor4.unity
+    guid: 6a6673bd7adbe1b48b32e2fac4bfbd22
+  - enabled: 1
+    path: Assets/Scenes/Blue Door/Bluedoor5.unity
+    guid: b43fb442764bb6040b88433fddf3f0a1
+  - enabled: 1
+    path: Assets/Scenes/Yellow Door/Yellowdoor1.unity
+    guid: ec9837c0fed3257479803e74ff44abf0
+  - enabled: 1
+    path: Assets/Scenes/Yellow Door/Yellowdoor2.unity
+    guid: 4e36f626e0fe1b6418c25f6ba19f0929
+  - enabled: 1
+    path: Assets/Scenes/Yellow Door/Yellowdoor3.unity
+    guid: 6240d86c443a0e34480c33ec1f49dc7c
+  - enabled: 1
+    path: Assets/Scenes/Yellow Door/Yellowdoor4.unity
+    guid: 2fbda6ed37872c449addee9d171b11bf
+  - enabled: 1
+    path: Assets/Scenes/Yellow Door/Yellowdoor5.unity
+    guid: e0b341f62e70cdd47a97586696860901
+  - enabled: 1
+    path: Assets/Scenes/Green Door/Greendoor1.unity
+    guid: d302a128493ba334b85e1d6e7182c344
+  - enabled: 1
+    path: Assets/Scenes/Green Door/Greendoor2.unity
+    guid: 74957917d33b58a42a257f270a822c0c
+  - enabled: 1
+    path: Assets/Scenes/Green Door/Greendoor3.unity
+    guid: 7cd227357f706fa4f9f18362d4554da7
+  - enabled: 1
+    path: Assets/Scenes/Green Door/Greendoor4.unity
+    guid: c50fc1f99a6f2b644bad7d040d9abf92
+  - enabled: 1
+    path: Assets/Scenes/Green Door/Greendoor5.unity
+    guid: c92144d7d4337c342a871f8a8192f4f8
+  - enabled: 1
     path: Assets/Scenes/Main Menu/MainMenu.unity
     guid: fc0ecc8ee9a4063499fb7034d891662a
-  - enabled: 1
-    path: Assets/Scenes/Blue Door/Bluedoor 1.unity
-    guid: 944104a043aa3e643a858e41574577c7
-  - enabled: 1
-    path: Assets/Scenes/Blue Door/Bluedoor 2.unity
-    guid: 7273af850a41dd447a7f12afea494d0b
-  - enabled: 1
-    path: Assets/Scenes/Green Door/Greendoor 1.unity
-    guid: bfcba0c4188a4334ba715311b92ab7f4
-  - enabled: 1
-    path: Assets/Scenes/Green Door/Greendoor 2.unity
-    guid: cee894c6bb855ef469175e0893507da1
-  - enabled: 1
-    path: Assets/Scenes/Yellow Door/Yellowdoor 1.unity
-    guid: c0f05216003952e45a6b3312534304c0
-  - enabled: 1
-    path: Assets/Scenes/Yellow Door/Yellowdoor 2.unity
-    guid: 4fdb8d54fb60ca44a85dac1a28f269e8
   m_configObjects: {}

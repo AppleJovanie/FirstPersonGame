@@ -1,70 +1,57 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class ButtonController : MonoBehaviour, IInteractable
 {
-    // Reference to the Light component that highlights the door this button controls.
+    [Header("Configuration")]
+    public DoorType doorType;
     public Light doorHighlightLight;
-    // Reference to the DoorTriggerArea associated with this button's door.
-    // CORRECTED: Changed type from 'DoorTrigger' to 'DoorTriggerArea'
     public DoorTriggerArea associatedDoorTriggerArea;
+
+    private bool isCompleted = false;
 
     void Start()
     {
-        if (doorHighlightLight == null)
-        {
-            Debug.LogError($"ButtonController on {gameObject.name}: Door Highlight Light is not assigned!");
-        }
-        if (associatedDoorTriggerArea == null)
-        {
-            Debug.LogError($"ButtonController on {gameObject.name}: Associated Door Trigger Area is not assigned!");
-        }
+        isCompleted = GameProgressManager.IsDoorCompleted(doorType);
 
-        // Ensure the door highlight light is off initially
         if (doorHighlightLight != null)
         {
+            // The light should always be off or disabled at the start.
             doorHighlightLight.enabled = false;
         }
     }
 
     public void Interact()
     {
-        Debug.Log($"Button {gameObject.name} pressed!");
+        // Check if the path is permanently complete.
+        if (isCompleted)
+        {
+            Debug.Log($"The {doorType} path is already complete. This button is disabled.");
+            return;
+        }
 
-        // Tell the GameFlowManager to set this button's associated trigger area as active.
+        Debug.Log($"Button for {doorType} door pressed!");
+
+        // Tell the GameFlowManager which door trigger is now active.
         if (GameFlowManager.Instance != null)
         {
             GameFlowManager.Instance.SetActiveDoorTriggerArea(associatedDoorTriggerArea);
         }
-        else
-        {
-            Debug.LogError("GameFlowManager.Instance is null! Make sure GameFlowManager is in the scene.");
-        }
 
-        // Turn on this door's highlight light and turn off others.
+        // Visually update the lights.
         TurnOnMyLightAndOffOthers();
     }
 
     private void TurnOnMyLightAndOffOthers()
     {
-        // Find all ButtonControllers in the scene.
+        // Find all other buttons in the scene.
         ButtonController[] allButtons = FindObjectsOfType<ButtonController>();
 
         foreach (ButtonController button in allButtons)
         {
             if (button.doorHighlightLight != null)
             {
-                // If it's this button, turn its light ON.
-                if (button == this)
-                {
-                    button.doorHighlightLight.enabled = true;
-                }
-                // Otherwise, turn other lights OFF.
-                else
-                {
-                    button.doorHighlightLight.enabled = false;
-                }
+                // Turn my light on, turn all others off.
+                button.doorHighlightLight.enabled = (button == this);
             }
         }
     }

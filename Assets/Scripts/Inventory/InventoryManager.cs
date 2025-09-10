@@ -7,123 +7,329 @@ using System.Linq;
 
 public class InventoryManager : MonoBehaviour
 {
-    // The persistent list that stores the actual item data
+    // --- ADDED THIS LINE ---
+    public static InventoryManager Instance { get; private set; }
+
+    public static bool IsMenuOpen { get; private set; }
+
+    [Header("Save/Load Settings")]
+    [Tooltip("You MUST assign every possible ItemData asset in the game here for the load system to work.")]
+    public List<ItemData> allPossibleItemsInGame;
+
+    // --- Item Data ---
     private List<ItemData> items = new List<ItemData>();
-
-
-    // The list of UI slot components currently in the scene
-    private List<InventorySLot> itemSlots = new List<InventorySLot>();
-
     private List<ItemData> equippableItems = new List<ItemData>();
-    // This tracks which weapon from the list is currently active. -1 means nothing is equipped.
     private int currentEquippableIndex = -1;
 
+    // --- UI References ---
     [Header("UI Prefabs & Containers")]
-    public GameObject itemSlotPrefab; // Assign your ItemSlot prefab here
-    public Transform slotsContainer;  // The parent object for the slots (e.g., InventorySlots panel)
+    public GameObject itemSlotPrefab;
+    public Transform slotsContainer;
+    private List<InventorySLot> itemSlots = new List<InventorySLot>();
 
-    // --- The rest of your variables for UI, Player, and State ---
-    public ItemData selectedItem { get; private set; }
+    [Header("Menu & Description")]
     public GameObject InventoryMenu;
-    private bool menuActivated;
-
-    [Header("Description Panel")]
     public GameObject descriptionPanel;
     public Image descriptionItemImage;
     public TextMeshProUGUI itemDescriptionText;
     public TextMeshProUGUI usePromptText;
+    private TextMeshProUGUI ammoText;
 
     [Header("Player References")]
     public Transform handTransform;
     public PlayerHealthShield playerHealth;
     public Gun currentlyEquippedGun;
 
-    [Header("External Managers")] // A new header for organization
+    [Header("External Managers")]
     public Filelogmanager fileLogUIManager;
-    private TextMeshProUGUI ammoText;
 
+    // --- State ---
     private GameObject equippedItemObject;
-
-    // --- NEW: This flag will be controlled by the QuizManager ---
+    public ItemData selectedItem { get; private set; }
+    private bool menuActivated;
     public bool inventoryLocked = false;
-   
 
-    // --- (Awake, OnEnable, OnDisable methods are for persistence) ---
+    // --- MODIFIED AWAKE METHOD ---
     private void Awake()
     {
-        InventoryManager[] managers = FindObjectsOfType<InventoryManager>();
-        if (managers.Length > 1) { Destroy(gameObject); }
-        else { DontDestroyOnLoad(gameObject); }
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
+
     void OnEnable() { SceneManager.sceneLoaded += OnSceneLoaded; }
     void OnDisable() { SceneManager.sceneLoaded -= OnSceneLoaded; }
 
-    // Reconnects to the UI in each new scene
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+
+        // When a new scene loads, our references to the old player are invalid. Clear them first.
+        handTransform = null;
+        playerHealth = null;
+        // --- END OF NEW BLOCK ---
+
+        ClearAllKeys();
+        FindPlayerReferences();
+       // FindUICanvasReferences();
+
         GameObject ammoTextObject = GameObject.FindGameObjectWithTag("AmmoUI");
         if (ammoTextObject != null)
         {
             ammoText = ammoTextObject.GetComponent<TextMeshProUGUI>();
-            ammoText.enabled = false; // <-- ADD THIS LINE to ensure it's hidden
+            if (ammoText != null) ammoText.enabled = false;
         }
-
-        ClearAllKeys();
-
-        Debug.Log("New scene loaded. Re-linking references...");
-
-        // Find player references
-        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-        if (playerObject != null)
+        // Now that we have found the new HandTransform, we can safely re-equip the weapon.
+        if (currentEquippableIndex != -1)
         {
-            Debug.Log("Found Player object: " + playerObject.name);
-
-            // IMPORTANT: The path must be exact.
-            Transform hand = playerObject.transform.Find("Main Camera/HandTransform");
-            if (hand != null)
-            {
-                handTransform = hand;
-                Debug.Log("Successfully found and assigned HandTransform.");
-            }
-            else
-            {
-                // This error will tell you the path is wrong.
-                Debug.LogError("Could not find 'HandTransform' as a child of 'Main Camera' on the Player object!");
-            }
-
-            playerHealth = playerObject.GetComponent<PlayerHealthShield>();
-            if (playerHealth == null)
-            {
-                Debug.LogWarning("Player object does not have a PlayerHealthShield component.");
-            }
+            EquipWeaponByIndex(currentEquippableIndex);
         }
-        else
-        {
-            // This error means your player is not tagged correctly.
-            Debug.LogError("COULD NOT FIND ANY GAMEOBJECT WITH THE 'Player' TAG IN THE NEW SCENE!");
-        }
-
-        // (The rest of your code for finding the InventoryCanvas...)
-        // ...
-        // ... it's a good idea to add similar null checks for your UI elements too.
-        GameObject inventoryCanvas = GameObject.Find("InventoryCanvas");
-        if (inventoryCanvas != null)
-        {
-            // Your existing code for finding UI elements...
-        }
-        else
-        {
-            Debug.LogError("COULD NOT FIND 'InventoryCanvas' IN THE NEW SCENE!");
-        }
-
-        // Finally, repopulate the UI
         RepopulateUI();
+    }
+
+    void Update()
+    {
+        if (inventoryLocked) return;
+        if (Input.GetButtonDown("Inventory")) { ToggleInventory(); }
+        if (menuActivated && selectedItem != null && Input.GetKeyDown(KeyCode.E)) { UseItem(selectedItem); }
+        if (!menuActivated)
+        {
+            float scroll = Input.GetAxis("Mouse ScrollWheel");
+            if (scroll != 0 && equippableItems.Count > 1)
+            {
+                if (scroll > 0f)
+                {
+                    currentEquippableIndex++;
+                    if (currentEquippableIndex >= equippableItems.Count) currentEquippableIndex = 0;
+                }
+                else if (scroll < 0f)
+                {
+                    currentEquippableIndex--;
+                    if (currentEquippableIndex < 0) currentEquippableIndex = equippableItems.Count - 1;
+                }
+                EquipWeaponByIndex(currentEquippableIndex);
+            }
+        }
+    }
+
+    public void AddItem(ItemData itemToAdd)
+    {
+        items.Add(itemToAdd);
+        if (itemToAdd.type == ItemType.Equippable)
+        {
+            equippableItems.Add(itemToAdd);
+            if (currentEquippableIndex == -1)
+            {
+                currentEquippableIndex = 0;
+                EquipWeaponByIndex(0);
+            }
+        }
+        RepopulateUI();
+    }
+
+    public void RemoveItem(ItemData itemToRemove)
+    {
+        items.Remove(itemToRemove);
+        if (itemToRemove.type == ItemType.Equippable)
+        {
+            equippableItems.Remove(itemToRemove);
+        }
+        RepopulateUI();
+    }
+
+    public bool HasItem(ItemData itemToCheck) => items.Contains(itemToCheck);
+
+    public void ClearInventory()
+    {
+        items.Clear();
+        equippableItems.Clear();
+        currentEquippableIndex = -1;
+        if (equippedItemObject != null)
+        {
+            Destroy(equippedItemObject);
+        }
+        if (ammoText != null)
+        {
+            ammoText.enabled = false;
+        }
+        RepopulateUI();
+        Debug.Log("Inventory Cleared.");
+    }
+
+    void UseItem(ItemData itemToUse)
+    {
+        if (itemToUse.type == ItemType.Equippable) { EquipItem(itemToUse); }
+        else if (itemToUse.type == ItemType.Consumable) { ConsumeItem(itemToUse); }
+        else if (itemToUse.type == ItemType.Readable) { ReadItem(itemToUse); }
+    }
+
+    void EquipItem(ItemData itemToEquip)
+    {
+        int weaponIndex = equippableItems.IndexOf(itemToEquip);
+        if (weaponIndex != -1)
+        {
+            if (weaponIndex == currentEquippableIndex)
+            {
+                ToggleInventory();
+                return;
+            }
+            currentEquippableIndex = weaponIndex;
+            EquipWeaponByIndex(currentEquippableIndex);
+        }
+        ToggleInventory();
+    }
+
+    private void EquipWeaponByIndex(int index)
+    {
+        if (index < 0 || index >= equippableItems.Count) return;
+        if (equippedItemObject != null) Destroy(equippedItemObject);
+        if (ammoText != null) ammoText.enabled = false;
+        ItemData weaponToEquip = equippableItems[index];
+        if (handTransform != null)
+        {
+            equippedItemObject = Instantiate(weaponToEquip.itemPrefab, handTransform);
+            currentlyEquippedGun = equippedItemObject.GetComponent<Gun>();
+            if (currentlyEquippedGun != null && ammoText != null)
+            {
+                currentlyEquippedGun.Initialize(ammoText);
+            }
+        }
+        else { Debug.LogError("Cannot equip weapon because HandTransform reference is missing!"); }
+    }
+
+    void ConsumeItem(ItemData itemToConsume)
+    {
+        if (playerHealth != null)
+        {
+            playerHealth.Heal(itemToConsume.healAmount);
+            playerHealth.AddShield(itemToConsume.shieldAmount);
+        }
+        if (itemToConsume.ammoType != AmmoType.None && itemToConsume.ammoAmount > 0)
+        {
+            if (currentlyEquippedGun != null && currentlyEquippedGun.ammoType == itemToConsume.ammoType)
+            {
+                currentlyEquippedGun.AddReserveAmmo(itemToConsume.ammoAmount);
+            }
+            else { Debug.Log("Wrong ammo type for the currently equipped gun!"); }
+        }
+        RemoveItem(itemToConsume);
+        ClearDescriptionPanel();
+    }
+
+    void ReadItem(ItemData itemToRead)
+    {
+        if (fileLogUIManager != null) { fileLogUIManager.ShowLog(itemToRead, this); }
+        else { Debug.LogError("FileLogUIManager is not assigned in the InventoryManager!"); }
+    }
+
+    public bool HasKey() => items.Any(item => item.type == ItemType.Key);
+
+    public void ConsumeKey()
+    {
+        ItemData keyToRemove = items.FirstOrDefault(item => item.type == ItemType.Key);
+        if (keyToRemove != null) { RemoveItem(keyToRemove); }
+    }
+
+    public void ClearAllKeys()
+    {
+        int keysRemoved = items.RemoveAll(item => item.type == ItemType.Key);
+        if (keysRemoved > 0) { RepopulateUI(); }
+    }
+
+    void ToggleInventory()
+    {
+        if (InventoryMenu == null) return;
+        menuActivated = !menuActivated;
+        InventoryMenu.SetActive(menuActivated);
+        IsMenuOpen = menuActivated;
+        if (menuActivated)
+        {
+            Time.timeScale = 0f;
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+        else
+        {
+            Time.timeScale = 1f;
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+            ClearDescriptionPanel();
+        }
+    }
+
+    // --- Add this entire new method to your InventoryManager.cs script ---
+
+    public void CloseInventory()
+    {
+        // Check if the menu is actually open before trying to close it.
+        if (InventoryMenu != null && menuActivated)
+        {
+            menuActivated = false;
+            InventoryMenu.SetActive(false);
+            IsMenuOpen = false;
+
+            // Reset cursor and time for the main menu.
+            // We don't need to lock the cursor in the main menu.
+            Time.timeScale = 1f;
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+
+            ClearDescriptionPanel();
+            Debug.Log("Inventory forcibly closed for scene change.");
+        }
+    }
+    public void SelectItem(ItemData itemToSelect)
+    {
+        // --- ADDED LOGS FOR DEBUGGING ---
+        Debug.Log($"--- SelectItem method entered. Attempting to display: {itemToSelect.name} ---");
+
+        selectedItem = itemToSelect;
+
+        if (descriptionPanel == null)
+        {
+            Debug.LogError("FAILURE: The 'descriptionPanel' reference is NULL in the InventoryManager!");
+            return;
+        }
+        Debug.Log("SUCCESS: 'descriptionPanel' reference is valid.");
+        descriptionPanel.SetActive(true);
+
+        if (descriptionItemImage != null)
+        {
+            descriptionItemImage.sprite = itemToSelect.itemSprite;
+        }
+
+        if (itemDescriptionText == null)
+        {
+            Debug.LogError("FAILURE: The 'itemDescriptionText' reference is NULL in the InventoryManager!");
+            return;
+        }
+        Debug.Log("SUCCESS: 'itemDescriptionText' reference is valid.");
+        itemDescriptionText.text = itemToSelect.itemDescription;
+
+        if (usePromptText != null)
+        {
+            usePromptText.gameObject.SetActive(true);
+            if (itemToSelect.type == ItemType.Equippable) { usePromptText.text = "Press [E] to Equip"; }
+            else if (itemToSelect.type == ItemType.Readable) { usePromptText.text = "Press [E] to Read"; }
+            else { usePromptText.text = "Press [E] to Use"; }
+        }
+
+        Debug.Log("--- SelectItem UI update complete. ---");
+    }
+
+    void ClearDescriptionPanel()
+    {
+        selectedItem = null;
+        if (descriptionPanel != null) descriptionPanel.SetActive(false);
+        if (usePromptText != null) usePromptText.gameObject.SetActive(false);
     }
 
     void RepopulateUI()
     {
         if (slotsContainer == null) return;
-
         while (itemSlots.Count < items.Count)
         {
             GameObject newSlotObject = Instantiate(itemSlotPrefab, slotsContainer);
@@ -131,7 +337,6 @@ public class InventoryManager : MonoBehaviour
             newSlot.Setup(this);
             itemSlots.Add(newSlot);
         }
-
         for (int i = 0; i < itemSlots.Count; i++)
         {
             if (i < items.Count)
@@ -147,252 +352,59 @@ public class InventoryManager : MonoBehaviour
         }
     }
 
-    public void AddItem(ItemData itemToAdd)
+    private void FindPlayerReferences()
     {
-        items.Add(itemToAdd);
-
-        // NEW: If the item is a weapon, add it to our weapon list
-        if (itemToAdd.type == ItemType.Equippable)
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        if (playerObject != null)
         {
-            equippableItems.Add(itemToAdd);
+            handTransform = playerObject.transform.Find("Main Camera/HandTransform");
+            playerHealth = playerObject.GetComponent<PlayerHealthShield>();
         }
-
-        RepopulateUI();
     }
 
-    public void RemoveItem(ItemData itemToRemove)
+    private void FindUICanvasReferences()
     {
-        items.Remove(itemToRemove);
-
-        // NEW: If the removed item was a weapon, remove it from our weapon list
-        if (itemToRemove.type == ItemType.Equippable)
+        GameObject inventoryCanvas = GameObject.Find("InventoryCanvas");
+        if (inventoryCanvas == null) { return; }
+        Transform menuTransform = inventoryCanvas.transform.Find("InventoryMenu");
+        if (menuTransform != null)
         {
-            equippableItems.Remove(itemToRemove);
-        }
-
-        RepopulateUI();
-    }
-
-    public bool HasItem(ItemData itemToCheck) { return items.Contains(itemToCheck); }
-    public void ClearInventory() { items.Clear(); if (InventoryMenu != null) { RepopulateUI(); } }
-
-    // Inside InventoryManager.cs
-
-    void Update()
-    {
-        // --- THIS IS THE LOCK ---
-        if (inventoryLocked)
-        {
-            return;
-        }
-
-        // --- Inventory Menu Logic ---
-        if (Input.GetButtonDown("Inventory")) { ToggleInventory(); }
-        if (menuActivated && selectedItem != null && Input.GetKeyDown(KeyCode.E))
-        {
-            UseItem(selectedItem);
-        }
-
-        // --- NEW: SCROLL WHEEL WEAPON SWITCHING ---
-        // We only check for the scroll wheel if the inventory menu is CLOSED.
-        if (!menuActivated)
-        {
-            float scroll = Input.GetAxis("Mouse ScrollWheel");
-
-            // Check if the player scrolled and has more than one weapon to switch between.
-            if (scroll != 0 && equippableItems.Count > 1)
+            InventoryMenu = menuTransform.gameObject;
+            Transform slots = menuTransform.Find("InventorySlots");
+            if (slots != null) { slotsContainer = slots; }
+            Transform descPanel = menuTransform.Find("InventoryDescriptionPanel");
+            if (descPanel != null)
             {
-                if (scroll > 0f) // Scrolled up
-                {
-                    currentEquippableIndex++;
-                    if (currentEquippableIndex >= equippableItems.Count)
-                    {
-                        currentEquippableIndex = 0; // Wrap around to the first weapon
-                    }
-                }
-                else if (scroll < 0f) // Scrolled down
-                {
-                    currentEquippableIndex--;
-                    if (currentEquippableIndex < 0)
-                    {
-                        currentEquippableIndex = equippableItems.Count - 1; // Wrap around to the last weapon
-                    }
-                }
-
-                // Call the method to physically equip the newly selected weapon
-                EquipWeaponByIndex(currentEquippableIndex);
+                descriptionPanel = descPanel.gameObject;
+                descriptionItemImage = descPanel.Find("ItemImage")?.GetComponent<Image>();
+                itemDescriptionText = descPanel.Find("ItemDescriptionText")?.GetComponent<TextMeshProUGUI>();
+                usePromptText = descPanel.Find("EquipPromptText")?.GetComponent<TextMeshProUGUI>();
             }
         }
     }
 
-    void UseItem(ItemData itemToUse)
+    public List<ItemData> GetAllItems()
     {
-        if (itemToUse.type == ItemType.Equippable) { EquipItem(itemToUse); }
-        else if (itemToUse.type == ItemType.Consumable) { ConsumeItem(itemToUse); }
-        else if (itemToUse.type == ItemType.Readable) { ReadItem(itemToUse); }
+        return new List<ItemData>(items);
     }
 
-    // Inside InventoryManager.cs
-
-    // Replace your old EquipItem method with this new version
-    void EquipItem(ItemData itemToEquip)
+    // This debugging method is correctly implemented.
+    public void LoadInventoryFromSave(List<string> savedItems)
     {
-        // Find the index of this weapon in our equippable list
-        int weaponIndex = equippableItems.IndexOf(itemToEquip);
-
-        if (weaponIndex != -1)
+        ClearInventory();
+        Debug.Log("Inventory cleared. Attempting to load items from save file...");
+        foreach (string itemName in savedItems)
         {
-            // If it's the same weapon, do nothing to prevent re-equipping.
-            if (weaponIndex == currentEquippableIndex)
+            ItemData item = allPossibleItemsInGame.Find(i => i.name == itemName);
+            if (item != null)
             {
-                ToggleInventory();
-                return;
+                Debug.Log($"<color=green>SUCCESS:</color> Found '{itemName}' in allPossibleItemsInGame. Adding to inventory.");
+                AddItem(item);
             }
-
-            currentEquippableIndex = weaponIndex;
-            EquipWeaponByIndex(currentEquippableIndex);
-        }
-
-        ToggleInventory();
-    }
-    void ConsumeItem(ItemData itemToConsume)
-    {
-        if (playerHealth != null)
-        {
-            playerHealth.Heal(itemToConsume.healAmount);
-            playerHealth.AddShield(itemToConsume.shieldAmount);
-        }
-        if (currentlyEquippedGun != null && itemToConsume.ammoAmount > 0)
-        {
-            currentlyEquippedGun.AddReserveAmmo(itemToConsume.ammoAmount);
-        }
-        RemoveItem(itemToConsume);
-        ClearDescriptionPanel();
-    }
-    void ReadItem(ItemData itemToRead)
-    {
-        if (fileLogUIManager != null)
-        {
-            // Call the manager to show the log, passing this inventory manager instance
-            fileLogUIManager.ShowLog(itemToRead, this);
-        }
-        else
-        {
-            Debug.LogError("FileLogUIManager is not assigned in the InventoryManager!");
-        }
-    }
-    void ToggleInventory()
-    {
-        if (InventoryMenu == null) return;
-        menuActivated = !menuActivated;
-        InventoryMenu.SetActive(menuActivated);
-        if (menuActivated)
-        {
-            Time.timeScale = 0.0001f;
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-        }
-        else
-        {
-            Time.timeScale = 1;
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-            ClearDescriptionPanel();
-        }
-    }
-
-    public void SelectItem(ItemData itemToSelect)
-    {
-        selectedItem = itemToSelect;
-        if (descriptionPanel == null) return;
-        descriptionPanel.SetActive(true);
-        if (usePromptText != null) usePromptText.gameObject.SetActive(true);
-
-        // --- MODIFY THIS PART ---
-        if (itemToSelect.type == ItemType.Equippable)
-        {
-            usePromptText.text = "Press [E] to Equip";
-        }
-        else if (itemToSelect.type == ItemType.Readable) // <-- NEW
-        {
-            usePromptText.text = "Press [E] to Read";   // <-- NEW
-        }
-        else
-        {
-            usePromptText.text = "Press [E] to Use";
-        }
-        // --- END MODIFICATION ---
-
-        descriptionItemImage.sprite = itemToSelect.itemSprite;
-        itemDescriptionText.text = itemToSelect.itemDescription;
-    }
-    public bool HasKey()
-    {
-        // Checks if any item in the inventory has the type "Key"
-        return items.Any(item => item.type == ItemType.Key);
-    }
-
-    public void ConsumeKey()
-    {
-        // Find the first item in the list that is a key
-        ItemData keyToRemove = items.FirstOrDefault(item => item.type == ItemType.Key);
-
-        // If a key was found, remove it
-        if (keyToRemove != null)
-        {
-            Debug.Log("Consumed a key: " + keyToRemove.itemName);
-            RemoveItem(keyToRemove); // Use your existing RemoveItem method
-        }
-    }
-
-    public void ClearAllKeys()
-    {
-        // This removes ALL items of type "Key" from the inventory list
-        int keysRemoved = items.RemoveAll(item => item.type == ItemType.Key);
-
-        if (keysRemoved > 0)
-        {
-            Debug.Log("Cleared " + keysRemoved + " keys from inventory for the new scene.");
-            RepopulateUI(); // Update the UI to show the keys are gone
-        }
-    }
-    void ClearDescriptionPanel()
-    {
-        selectedItem = null;
-        if (descriptionPanel != null) descriptionPanel.SetActive(false);
-        if (usePromptText != null) usePromptText.gameObject.SetActive(false);
-    }
-    // Add this new method to InventoryManager.cs
-
-    private void EquipWeaponByIndex(int index)
-    {
-        // Make sure the index is valid
-        if (index < 0 || index >= equippableItems.Count) return;
-
-        // Destroy the old weapon if one exists
-        if (equippedItemObject != null)
-        {
-            Destroy(equippedItemObject);
-        }
-
-        // Hide the ammo UI by default
-        if (ammoText != null)
-        {
-            ammoText.enabled = false;
-        }
-
-        // Get the ItemData for the new weapon
-        ItemData weaponToEquip = equippableItems[index];
-
-        // Create the new weapon instance
-        equippedItemObject = Instantiate(weaponToEquip.itemPrefab, handTransform);
-        currentlyEquippedGun = equippedItemObject.GetComponent<Gun>();
-
-        // Pass the ammo UI reference to the new gun
-        if (currentlyEquippedGun != null && ammoText != null)
-        {
-            currentlyEquippedGun.Initialize(ammoText);
+            else
+            {
+                Debug.LogWarning($"<color=red>FAILURE:</color> Could not find an item asset named '{itemName}' in the 'allPossibleItemsInGame' list!");
+            }
         }
     }
 }
-

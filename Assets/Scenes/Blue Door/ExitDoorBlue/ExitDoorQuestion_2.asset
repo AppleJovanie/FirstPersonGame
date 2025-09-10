@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ca0e77fd63755244b5f347367953318, type: 3}
+  m_Name: ExitDoorQuestion_2
+  m_EditorClassIdentifier: 
+  questionText: "class Profile {\r\n    private String username;\r\n    public String
+    ______() { return username; }\r\n}\nWhich type of method should be used to safely
+    retrieve the hidden username?"
+  answers:
+  - getter
+  - setter
+  - public
+  - private
+  correctAnswerIndex: 0

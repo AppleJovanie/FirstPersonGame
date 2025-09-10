@@ -1,12 +1,17 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using System; // Required for using the 'Action' delegate
+using UnityEngine.SceneManagement;
 
 public class QuizManager : MonoBehaviour
 {
+    // --- NEW STATIC FLAG ---
+    public static bool IsQuizActive { get; private set; }
+
     [Header("Quiz UI")]
     public GameObject quizPanel;
     public TextMeshProUGUI questionText;
@@ -25,97 +30,46 @@ public class QuizManager : MonoBehaviour
     public GameObject playerHudCanvas;
 
     private Question currentQuestion;
-    // This delegate will store the action to perform on a correct answer (e.g., show rewards OR load scene).
     private Action onQuizSuccess;
-
-    void Start()
-    {
-        quizPanel.SetActive(false);
-        rewardPanel.SetActive(false);
-        if (inventoryManager == null)
-        {
-            inventoryManager = FindObjectOfType<InventoryManager>();
-        }
-    }
-
-    /// <summary>
-    /// Starts a new quiz session.
-    /// </summary>
-    /// <param name="questions">The array of possible questions for this quiz.</param>
-    /// <param name="successCallback">The method to call when the player answers correctly.</param>
-    /// <param name="requiresKey">Set to true if this quiz costs a key to attempt.</param>
+    
     public void StartQuiz(Question[] questions, Action successCallback, bool requiresKey)
     {
-        Time.timeScale = 0f; // This freezes all gameplay, animations, and physics
+        EnsureInventoryManager(); // <-- grab latest manager
+
+        Time.timeScale = 0f;
         if (playerHudCanvas != null)
         {
             playerHudCanvas.SetActive(false);
         }
 
-        // Only consume a key if the quiz requires one.
-        if (requiresKey)
+        if (requiresKey && inventoryManager != null)
         {
-            if (inventoryManager != null)
-            {
-                inventoryManager.ConsumeKey();
-            }
+            inventoryManager.ConsumeKey();
         }
-       
-
-        // Store the action we need to run if the answer is correct.
+        
         onQuizSuccess = successCallback;
 
-        // Lock inventory and show cursor.
         if (inventoryManager != null)
         {
             inventoryManager.inventoryLocked = true;
         }
+
+        IsQuizActive = true;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        // Display the quiz UI with a new question.
         DisplayNewQuestion(questions);
         quizPanel.SetActive(true);
         feedbackText.text = "";
     }
 
-    // Inside QuizManager.cs
-
-    private void AnswerSelected(int index)
-    {
-        // Disable all answer buttons to prevent multiple clicks.
-        foreach (var btn in answerButtons) { btn.interactable = false; }
-
-        if (index == currentQuestion.correctAnswerIndex)
-        {
-            feedbackText.text = "Correct!";
-            // We now start a coroutine that can wait even when time is paused.
-            StartCoroutine(CorrectAnswerRoutine());
-        }
-        else
-        {
-            feedbackText.text = "Incorrect!";
-            if (playerHealth != null)
-            {
-                playerHealth.TakeDamage(penaltyDamage);
-            }
-            // Start the other coroutine for an incorrect answer.
-            StartCoroutine(IncorrectAnswerRoutine());
-        }
-    }
-
-    private void ExecuteSuccessAction()
-    {
-        onQuizSuccess.Invoke();
-    }
-
     private void EndQuiz()
     {
-        Time.timeScale = 1f; // This unfreezes the game
+        IsQuizActive = false;
+        Time.timeScale = 1f;
         if (playerHudCanvas != null)
         {
             playerHudCanvas.SetActive(true);
-            Debug.Log("The game unfreezes");
         }
 
         if (inventoryManager != null)
@@ -128,24 +82,88 @@ public class QuizManager : MonoBehaviour
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+    }
+    
+    private void AnswerSelected(int index)
+    {
+        foreach (var btn in answerButtons) { btn.interactable = false; }
 
-       
-
+        if (index == currentQuestion.correctAnswerIndex)
+        {
+            feedbackText.text = "Correct!";
+            StartCoroutine(CorrectAnswerRoutine());
+        }
+        else
+        {
+            feedbackText.text = "Incorrect!";
+            if (playerHealth != null)
+            {
+                playerHealth.TakeDamage(penaltyDamage);
+            }
+            StartCoroutine(IncorrectAnswerRoutine());
+        }
     }
 
+    private System.Collections.IEnumerator CorrectAnswerRoutine()
+    {
+        yield return new WaitForSecondsRealtime(1f);
+        onQuizSuccess?.Invoke();
+    }
+
+    private System.Collections.IEnumerator IncorrectAnswerRoutine()
+    {
+        yield return new WaitForSecondsRealtime(2f);
+        EndQuiz();
+    }
+
+    public void ShowRandomRewards()
+    {
+        List<ItemData> availableRewards = new List<ItemData>();
+        foreach (ItemData reward in allPossibleRewards)
+        {
+            if (reward.requiredItem != null)
+            {
+                if (inventoryManager.HasItem(reward.requiredItem))
+                {
+                    availableRewards.Add(reward);
+                }
+            }
+            else
+            {
+                availableRewards.Add(reward);
+            }
+        }
+
+        quizPanel.SetActive(false);
+        rewardPanel.SetActive(true);
+
+        List<ItemData> finalRewards = availableRewards.OrderBy(x => UnityEngine.Random.value).Take(3).ToList();
+
+        for (int i = 0; i < rewardButtons.Length; i++)
+        {
+            if (i < finalRewards.Count)
+            {
+                rewardButtons[i].Setup(finalRewards[i], this);
+                rewardButtons[i].gameObject.SetActive(true);
+            }
+            else
+            {
+                rewardButtons[i].gameObject.SetActive(false);
+            }
+        }
+    }
+    
     private void DisplayNewQuestion(Question[] questions)
     {
         if (questions == null || questions.Length == 0)
         {
-            Debug.LogError("No questions provided for this quiz!");
             EndQuiz();
             return;
         }
 
-        // Get a random question from the provided array.
         currentQuestion = questions[UnityEngine.Random.Range(0, questions.Length)];
-
         questionText.text = currentQuestion.questionText;
+
         for (int i = 0; i < answerButtons.Length; i++)
         {
             answerButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = currentQuestion.answers[i];
@@ -155,59 +173,29 @@ public class QuizManager : MonoBehaviour
             answerButtons[i].interactable = true;
         }
     }
-
-    /// <summary>
-    /// This method is now public. It's used by QuizMachine as its success action.
-    /// </summary>
-    public void ShowRandomRewards()
-    {
-        quizPanel.SetActive(false);
-        rewardPanel.SetActive(true);
-        List<ItemData> randomRewards = allPossibleRewards.OrderBy(x => UnityEngine.Random.value).Take(3).ToList();
-
-        for (int i = 0; i < rewardButtons.Length; i++)
-        {
-            if (i < randomRewards.Count)
-            {
-                rewardButtons[i].Setup(randomRewards[i], this);
-                rewardButtons[i].gameObject.SetActive(true);
-            }
-            else
-            {
-                rewardButtons[i].gameObject.SetActive(false);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Called by a RewardButton after a reward has been selected from the UI.
-    /// </summary>
+    
     public void RewardSelected(ItemData reward)
     {
+        EnsureInventoryManager(); // <-- make sure we have the right one
+
         if (inventoryManager != null)
         {
             inventoryManager.AddItem(reward);
+            Debug.Log($"Added reward {reward.name} to inventory.");
         }
+        else
+        {
+            Debug.LogError("InventoryManager not found when trying to add reward!");
+        }
+
         EndQuiz();
     }
-
-    // Add these two new methods to your QuizManager.cs script
-
-    private System.Collections.IEnumerator CorrectAnswerRoutine()
+    private void EnsureInventoryManager()
     {
-        // This waits for 1 second of REAL time, ignoring Time.timeScale.
-        yield return new WaitForSecondsRealtime(1f);
-
-        // After waiting, it executes the success action.
-        ExecuteSuccessAction();
+        if (inventoryManager == null)
+        {
+            inventoryManager = FindObjectOfType<InventoryManager>();
+        }
     }
 
-    private System.Collections.IEnumerator IncorrectAnswerRoutine()
-    {
-        // This waits for 2 seconds of REAL time.
-        yield return new WaitForSecondsRealtime(2f);
-
-        // After waiting, it ends the quiz and unfreezes the game.
-        EndQuiz();
-    }
 }

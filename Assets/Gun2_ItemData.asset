@@ -20,4 +20,5 @@ MonoBehaviour:
   healAmount: 0
   shieldAmount: 0
   ammoAmount: 0
+  ammoType: 2
   clueText: 

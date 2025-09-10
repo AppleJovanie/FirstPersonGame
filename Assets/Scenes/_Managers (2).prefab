@@ -46,6 +46,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e925aa894060e3b4f9ae41e70649733f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  allPossibleItemsInGame:
+  - {fileID: 11400000, guid: ccfde6dc9c508764e97e2aa40f686e30, type: 2}
+  - {fileID: 11400000, guid: e5a3406019f88044caef7eb26b06e747, type: 2}
+  - {fileID: 11400000, guid: e1cfa8d6806c1db47976a22cbb788293, type: 2}
+  - {fileID: 11400000, guid: 5bdee8d91e71ece498fd9a0dcbe6e9de, type: 2}
+  - {fileID: 11400000, guid: 36a0f5c7e96c5604f9f854a3e1d61bc9, type: 2}
+  - {fileID: 11400000, guid: 2d85dc271e4cddb4cba546fd16288563, type: 2}
+  - {fileID: 11400000, guid: b5e03b9c6cddb474694479543fc6d4a1, type: 2}
+  - {fileID: 11400000, guid: 180910de9e73de04b8b9c91e4bb5a902, type: 2}
+  - {fileID: 11400000, guid: f2c7d29900478374abe0f90aa8cbd0e1, type: 2}
+  - {fileID: 11400000, guid: 368c2a5f6955bf34c9bd923e4e36c848, type: 2}
+  - {fileID: 11400000, guid: 1c0d526e83c67aa43bfd19e77ee4ebca, type: 2}
+  - {fileID: 11400000, guid: 1e2b95b8cd2cd6d45863a1210a00a4b8, type: 2}
   itemSlotPrefab: {fileID: 4191809643038031173}
   slotsContainer: {fileID: 7527582800531256677}
   InventoryMenu: {fileID: 2011465443349783369}
@@ -627,7 +640,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 10
   m_TargetDisplay: 0
 --- !u!114 &9065544942644550207
 MonoBehaviour:

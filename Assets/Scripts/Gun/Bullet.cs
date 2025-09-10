@@ -4,27 +4,22 @@ using UnityEngine;
 
 public class Bullet : MonoBehaviour
 {
-    public float speed = 60f;        // Bullet travel speed
-    public float lifeTime = 2f;       // Time before auto-destroy
-    public GameObject impactEffect;   // Explosion / impact prefab
+    public float speed = 60f;
+    public float lifeTime = 2f;
+    public GameObject impactEffect;
 
-    private float damage;             // Damage value set by Gun script
-    private Rigidbody rb;             // Rigidbody reference
-
-    
+    private float damage;
+    private Rigidbody rb;
 
     void Start()
     {
-        // Get Rigidbody and push the bullet forward immediately
         rb = GetComponent<Rigidbody>();
         if (rb != null)
         {
-            rb.useGravity = false; // No drop unless you want realistic physics
+            rb.useGravity = false;
             rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
-            rb.velocity = transform.forward * speed; // move bullet
+            rb.velocity = transform.forward * speed;
         }
-
-        // Auto destroy after lifetime
         Destroy(gameObject, lifeTime);
     }
 
@@ -33,22 +28,27 @@ public class Bullet : MonoBehaviour
         damage = amount;
     }
 
-    private void OnTriggerEnter(Collider other)
+    // --- THIS IS THE CORRECTED METHOD ---
+    // We use OnCollisionEnter for solid objects that should collide and stop.
+    private void OnCollisionEnter(Collision collision)
     {
-        // Instantiate an impact effect
+        // --- DEBUGGING LOG ---
+        // This will print the name of any object the bullet hits to the console.
+        Debug.Log("Bullet hit: " + collision.gameObject.name);
+
         if (impactEffect != null)
         {
             Instantiate(impactEffect, transform.position, Quaternion.identity);
         }
 
-        // Check if target can take damage
-        IDamageable damageable = other.GetComponent<IDamageable>();
+        // Check if the hit object can take damage
+        IDamageable damageable = collision.gameObject.GetComponent<IDamageable>();
         if (damageable != null)
         {
             damageable.TakeDamage(damage);
         }
 
-        // Destroy bullet
+        // Destroy the bullet on impact
         Destroy(gameObject);
     }
 }

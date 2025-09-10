@@ -56,11 +56,13 @@ MonoBehaviour:
   rewardButtons:
   - {fileID: 0}
   - {fileID: 0}
-  quizCameraPosition: {fileID: 0}
-  cameraTransitionSpeed: 2
+  - {fileID: 0}
   playerHealth: {fileID: 0}
   inventoryManager: {fileID: 0}
   penaltyDamage: 10
   allPossibleRewards:
   - {fileID: 11400000, guid: 180910de9e73de04b8b9c91e4bb5a902, type: 2}
-  - {fileID: 11400000, guid: e1cfa8d6806c1db47976a22cbb788293, type: 2}
+  - {fileID: 11400000, guid: f2c7d29900478374abe0f90aa8cbd0e1, type: 2}
+  - {fileID: 11400000, guid: 1c0d526e83c67aa43bfd19e77ee4ebca, type: 2}
+  - {fileID: 11400000, guid: 368c2a5f6955bf34c9bd923e4e36c848, type: 2}
+  playerHudCanvas: {fileID: 0}

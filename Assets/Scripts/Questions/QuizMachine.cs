@@ -1,60 +1,63 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class QuizMachine : MonoBehaviour, IInteractable
 {
+    [Header("Save/Load Settings")]
+    [Tooltip("A unique ID for this specific machine (e.g., 'RedDoor_Quiz1'). MUST BE UNIQUE.")]
+    public string uniqueId;
+
+    [Header("Quiz Logic")]
     public Question[] questions;
-    // This can now be read by other scripts, but only changed by this one.
+
+    // This can be read by other scripts, but only changed from within this one.
     public bool hasBeenUsed { get; private set; } = false;
 
+    // Reference to the main quiz manager in the scene.
     private QuizManager quizManager;
-    private InventoryManager inventoryManager; // <-- NEW: Add reference to inventory
 
     void Start()
     {
+        // Find the QuizManager in the scene.
         quizManager = FindObjectOfType<QuizManager>();
-        inventoryManager = FindObjectOfType<InventoryManager>(); // <-- NEW: Find the inventory manager
 
-        if (quizManager == null)
-            Debug.LogError("QuizMachine cannot find a QuizManager!");
-        if (inventoryManager == null)
-            Debug.LogError("QuizMachine cannot find an InventoryManager!");
-    }
-
-    // --- THIS METHOD IS COMPLETELY REWRITTEN ---
-    public void Interact()
-    {
-        if (hasBeenUsed)
+        // Warn the developer if they forgot to set a unique ID.
+        if (string.IsNullOrEmpty(uniqueId))
         {
-            Debug.Log("This quiz machine has already been completed.");
-            return;
+            Debug.LogError($"QuizMachine '{gameObject.name}' is missing a unique ID! The save system will not work for this machine.");
         }
 
-        // The key check has been removed. The player can always interact if it hasn't been used.
-        Debug.Log("Player is using a free quiz machine.");
-
-        // We now pass 'false' to indicate this quiz does NOT require a key.
-        quizManager.StartQuiz(questions, HandleMachineSuccess, false);
-
+        if (quizManager == null)
+        {
+            Debug.LogError("QuizMachine cannot find a QuizManager in the scene!");
+        }
     }
 
+    public void Interact()
+    {
+        // First, check if the machine has already been used.
+        if (hasBeenUsed)
+        {
+            Debug.Log($"This quiz machine ({uniqueId}) has already been completed.");
+            return; // Stop the interaction.
+        }
+
+        // If not used, start the quiz.
+        Debug.Log($"Player is using quiz machine: {uniqueId}");
+
+        // Pass the questions, the success callback, and 'false' because it doesn't require a key.
+        quizManager.StartQuiz(questions, HandleMachineSuccess, false);
+    }
+
+    // This is the callback function that runs when the QuizManager reports a correct answer.
     private void HandleMachineSuccess()
     {
         MarkAsCompleted();
         quizManager.ShowRandomRewards();
     }
 
-    // This method can now be called by the QuizManager after a correct answer.
+    // This public method allows the save/load system (or the quiz itself) to mark the machine as used.
     public void MarkAsCompleted()
     {
         hasBeenUsed = true;
-    }
-
-    public Question GetRandomQuestion()
-    {
-        if (questions.Length == 0) return null;
-        int randomIndex = Random.Range(0, questions.Length);
-        return questions[randomIndex];
     }
 }

@@ -6,8 +6,14 @@ public class ExitDoor : MonoBehaviour, IInteractable
     [Header("Quiz Logic")]
     [Tooltip("The questions for this specific door's quiz.")]
     public Question[] questions;
-    [Tooltip("The name of the scene to load upon a correct answer.")]
+    [Tooltip("The name of the scene to load upon a correct answer (e.g., MainScene).")]
     public string sceneToLoad;
+
+    // --- NEW SECTION ---
+    [Header("Progress Tracking")]
+    [Tooltip("The color of the path this door completes.")]
+    public DoorType doorTypeToComplete; // This tells the manager which path is finished.
+    // --- END NEW SECTION ---
 
     private QuizManager quizManager;
     private InventoryManager inventoryManager;
@@ -26,25 +32,27 @@ public class ExitDoor : MonoBehaviour, IInteractable
 
     public void Interact()
     {
-        // Check if the player has a key to attempt opening the door
+        // This logic remains the same: it checks for a key and starts the quiz.
         if (inventoryManager != null && inventoryManager.HasKey())
         {
             Debug.Log("Player has a key. Starting door quiz.");
-            // Start the quiz and tell the QuizManager to run our "LoadNextScene" method on success.
             quizManager.StartQuiz(questions, LoadNextScene, true);
         }
         else
         {
             Debug.Log("You need a key to attempt this lock!");
-            // You could show a UI message here telling the player they need a key.
         }
     }
 
     // This method is passed to the QuizManager to be called only on a correct answer.
     private void LoadNextScene()
     {
-        Debug.Log("Quiz passed! Loading scene: " + sceneToLoad);
-        // It's good practice to reset the time scale before loading a new scene.
+        // --- THIS IS THE NEW LINE OF CODE ---
+        // Before loading the next scene, we tell the GameProgressManager that this path is complete.
+        GameProgressManager.CompleteDoor(doorTypeToComplete);
+        // --- END NEW LINE ---
+
+        Debug.Log("Quiz passed! Returning to " + sceneToLoad);
         Time.timeScale = 1f;
         SceneManager.LoadScene(sceneToLoad);
     }

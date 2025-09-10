@@ -1,66 +1,144 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class MainMenuManager : MonoBehaviour
 {
     [Header("Scene to Load")]
-    // Assign the name of your main game scene in the Inspector (e.g., "MainScene")
-    public string newGameSceneName;
+    public string newGameSceneName; // Assign in Inspector
 
     [Header("UI Panels")]
-    // Assign your Settings Panel GameObject in the Inspector
     public GameObject settingsPanel;
+
+    [Header("UI Buttons")]
+    public GameObject loadGameButton;
 
     void Start()
     {
-        // Make sure the settings panel is hidden when the menu starts
         if (settingsPanel != null)
-        {
             settingsPanel.SetActive(false);
-        }
-    }
 
-    // --- Button Functions ---
+        if (loadGameButton != null)
+            loadGameButton.SetActive(GameSaveManager.Instance.HasSave());
+    }
 
     public void OnNewGameButton()
     {
         if (!string.IsNullOrEmpty(newGameSceneName))
         {
-            Debug.Log($"Starting new game, loading scene: {newGameSceneName}");
+            if (InventoryManager.Instance != null)
+            {
+                Destroy(InventoryManager.Instance.gameObject);
+            }
+
+            GameSaveManager.Instance.ClearSave();
             SceneManager.LoadScene(newGameSceneName);
         }
         else
         {
-            Debug.LogError("New Game Scene Name is not set in the MainMenuManager Inspector!");
+            Debug.LogError("❌ New Game Scene Name is not set in the Inspector!");
         }
     }
 
     public void OnLoadGameButton()
     {
-        // Placeholder for future save/load functionality
-        Debug.Log("Load Game button pressed. (Functionality not yet implemented)");
-        // Example: SaveSystem.LoadGame();
+        SaveData data = GameSaveManager.Instance.LoadGame();
+        if (data != null)
+        {
+            SceneManager.sceneLoaded += OnSceneLoaded;
+            SceneManager.LoadScene(data.sceneName);
+        }
+        else
+        {
+            Debug.LogWarning("⚠ No saved game to load!");
+        }
+    }
+
+    // --- THIS METHOD IS MODIFIED WITH THE NEW LOGS ---
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+
+        SaveData data = GameSaveManager.Instance.LoadGame();
+        if (data != null)
+        {
+            // Load Player
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null)
+            {
+                player.transform.position = new Vector3(data.x, data.y, data.z);
+                PlayerHealthShield phs = player.GetComponent<PlayerHealthShield>();
+                if (phs != null)
+                {
+                    phs.currentHealth = data.currentHealth;
+                    phs.currentShield = data.currentShield;
+                    phs.SendMessage("UpdateUI");
+                }
+            }
+
+            // Load Inventory
+            if (InventoryManager.Instance != null)
+            {
+                InventoryManager.Instance.LoadInventoryFromSave(data.inventoryItems);
+            }
+
+            // Remove Duplicate Item Pickups from Scene
+            if (data.inventoryItems != null)
+            {
+                ItemPickup[] allPickupsInScene = FindObjectsOfType<ItemPickup>();
+                foreach (ItemPickup pickup in allPickupsInScene)
+                {
+                    if (pickup.itemData != null && data.inventoryItems.Contains(pickup.itemData.name))
+                    {
+                        Destroy(pickup.gameObject);
+                    }
+                }
+            }
+
+            // --- ADD THIS ENTIRE BLOCK TO DEBUG QUIZ MACHINES ---
+
+            // Load Quiz Machine States
+            if (data.usedQuizMachineIds != null && data.usedQuizMachineIds.Count > 0)
+            {
+                // Log 1: Shows you all the used IDs loaded from the file.
+                Debug.Log($"<color=cyan>LOADED used machine IDs: {string.Join(", ", data.usedQuizMachineIds)}</color>");
+
+                QuizMachine[] allQuizMachines = FindObjectsOfType<QuizMachine>();
+                foreach (QuizMachine machine in allQuizMachines)
+                {
+                    // Log 2: Shows you which machine it's checking in the scene.
+                    Debug.Log($"Checking machine in scene with ID: '{machine.uniqueId}'");
+
+                    if (data.usedQuizMachineIds.Contains(machine.uniqueId))
+                    {
+                        // Log 3: Confirms when a match is found.
+                        Debug.Log($"<color=green>MATCH FOUND! Marking '{machine.uniqueId}' as completed.</color>");
+                        machine.MarkAsCompleted();
+                    }
+                }
+            }
+            else
+            {
+                Debug.Log("<color=yellow>Loaded save data, but no used quiz machine IDs were found.</color>");
+            }
+
+            // --- END OF NEW BLOCK ---
+        }
+
+        // Final scene setup
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+        Time.timeScale = 1f;
     }
 
     public void OnSettingsButton()
     {
         if (settingsPanel != null)
-        {
-            // Toggle the settings panel's visibility
-            bool isActive = settingsPanel.activeSelf;
-            settingsPanel.SetActive(!isActive);
-            Debug.Log($"Settings panel toggled to: {!isActive}");
-        }
-        else
-        {
-            Debug.LogError("Settings Panel is not assigned in the MainMenuManager Inspector!");
-        }
+            settingsPanel.SetActive(!settingsPanel.activeSelf);
     }
 
     public void OnExitButton()
     {
-        Debug.Log("Exit button pressed. Quitting application.");
-        // This will only work in a built version of the game, not in the Unity Editor.
         Application.Quit();
+        Debug.Log("🚪 Game closed.");
     }
 }

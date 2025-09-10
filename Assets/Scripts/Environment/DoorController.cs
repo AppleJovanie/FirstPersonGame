@@ -1,51 +1,60 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class DoorController : MonoBehaviour
+public class DoorController : MonoBehaviour, IInteractable
 {
-    // The specific item required to open this door (e.g., GunData)
+    [Header("Door Settings")]
+    public DoorType doorType;
+    public string firstSceneToLoad;
     public ItemData requiredItem;
-    public string nextSceneName;
+    public DoorTriggerArea myTriggerArea;
+
+    // --- THIS LINE IS MODIFIED ---
+    public bool isCompleted { get; private set; } = false;
 
     private InventoryManager inventoryManager;
 
     void Start()
     {
-        // Find the inventory manager when the scene starts
-        inventoryManager = FindObjectOfType<InventoryManager>();
-        if (inventoryManager == null)
+        inventoryManager = InventoryManager.Instance;
+        isCompleted = GameProgressManager.IsDoorCompleted(doorType);
+
+        if (isCompleted)
         {
-            Debug.LogError("DoorController could not find an InventoryManager in the scene!");
+            GetComponent<Renderer>().material.color *= 0.5f;
+        }
+
+        if (myTriggerArea == null)
+        {
+            Debug.LogError($"DoorController on '{gameObject.name}' is missing its 'myTriggerArea' reference!");
         }
     }
 
-    private void OnTriggerEnter(Collider other)
+    public void Interact()
     {
-        if (other.CompareTag("Player"))
+        if (isCompleted)
         {
-            TryProceedToNextScene();
+            Debug.Log($"The {doorType} path has already been completed.");
+            return;
         }
-    }
 
-    public void TryProceedToNextScene()
-    {
-        // The new logic: Check the inventory directly!
+        if (GameFlowManager.Instance == null || GameFlowManager.Instance.GetActiveDoorTriggerArea() != myTriggerArea)
+        {
+            Debug.Log("This door is not the one that is currently active.");
+            return;
+        }
+
         if (inventoryManager != null && inventoryManager.HasItem(requiredItem))
         {
-            ProceedToNextScene();
+            Debug.Log($"Entering the {doorType} door.");
+            if (!string.IsNullOrEmpty(firstSceneToLoad))
+            {
+                SceneManager.LoadScene(firstSceneToLoad);
+            }
         }
         else
         {
-            Debug.Log("The door is locked. You are missing the required item!");
-            // You can show a UI message here, like "Requires Gun"
-        }
-    }
-
-    public void ProceedToNextScene()
-    {
-        if (!string.IsNullOrEmpty(nextSceneName))
-        {
-            SceneManager.LoadScene(nextSceneName);
+            Debug.Log($"You need the {requiredItem.itemName} to enter this door!");
         }
     }
 }

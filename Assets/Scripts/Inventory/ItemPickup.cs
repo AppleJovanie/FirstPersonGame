@@ -1,39 +1,32 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class ItemPickup : MonoBehaviour, IInteractable
 {
-    
-    private InventoryManager inventoryManager;
+    [Tooltip("The ItemData asset this pickup represents. This MUST be assigned in the Inspector.")]
     public ItemData itemData;
 
-   
-    public string itemName = "Pistol"; // Example item name
-
-    void Start()
-    {
-        
-        inventoryManager = FindObjectOfType<InventoryManager>();
-
-        if (inventoryManager == null)
-        {
-            Debug.LogError("Could not find an InventoryManager in the scene!");
-        }
-    }
-
-  
     public void Interact()
     {
-        Debug.Log($"Interacting with {gameObject.name}");
-
-       
-        if (inventoryManager != null)
+        // First, check if an item has been assigned to prevent errors.
+        if (itemData == null)
         {
-            inventoryManager.AddItem(itemData); 
+            Debug.LogError($"No ItemData assigned to the pickup object: {gameObject.name}");
+            return;
         }
 
-       
+        // Use the reliable singleton instance to find the inventory.
+        if (InventoryManager.Instance != null)
+        {
+            // Add the assigned item to the player's inventory.
+            InventoryManager.Instance.AddItem(itemData);
+            Debug.Log($"Picked up and added '{itemData.name}' to inventory.");
+        }
+        else
+        {
+            Debug.LogError("Could not find an InventoryManager instance in the scene!");
+        }
+
+        // Destroy the pickup object from the world.
         Destroy(gameObject);
     }
 }

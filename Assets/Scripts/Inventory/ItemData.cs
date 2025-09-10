@@ -22,10 +22,17 @@ public class ItemData : ScriptableObject
     public int healAmount = 0;
     public int shieldAmount = 0;
     public int ammoAmount = 0; // For ammo packs
+    public AmmoType ammoType = AmmoType.None;
 
     [Header("Readable/Clue Settings")]
 
     [TextArea(15, 20)] // This makes the text box bigger in the Inspector
     public string clueText;
+
+    [Header("Requirement")]
+    [Tooltip("Does this reward require another item to be in the inventory before it can appear?")]
+    public ItemData requiredItem; // <-- ADD THIS LINE
+
+
 
 }

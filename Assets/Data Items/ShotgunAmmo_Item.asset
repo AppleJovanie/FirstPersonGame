@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec83ca46209becd4998c2bf82b4c9eab, type: 3}
+  m_Name: ShotgunAmmo_Item
+  m_EditorClassIdentifier: 
+  itemName: Shotgun Shells
+  itemSprite: {fileID: 21300000, guid: 4c657de032e11f04eb02e8327cc8ca19, type: 3}
+  itemDescription: Shotgun Ammo +12
+  type: 1
+  itemPrefab: {fileID: 0}
+  healAmount: 0
+  shieldAmount: 0
+  ammoAmount: 12
+  ammoType: 2
+  clueText: 
+  requiredItem: {fileID: 11400000, guid: e5a3406019f88044caef7eb26b06e747, type: 2}
