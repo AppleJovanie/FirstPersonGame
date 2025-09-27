@@ -12,12 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ca0e77fd63755244b5f347367953318, type: 3}
   m_Name: Door3ExitQuestion
   m_EditorClassIdentifier: 
-  questionText: "class ScoreBoard {\r\n    private int score;\r\n    public void
-    ______(int s) { score = s; }\r\n}\r\n\r\nWhat kind of method is this, allowing
-    controlled updates to a private value?"
+  questionText: Which method updates private data?
   answers:
-  - this
+  - getter
   - setter
-  - private
-  - static
+  - constructor
+  - reader
   correctAnswerIndex: 1

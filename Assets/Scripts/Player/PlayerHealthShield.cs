@@ -79,7 +79,8 @@ public class PlayerHealthShield : MonoBehaviour
 
     void Die()
     {
-        Debug.Log("Player Died!");
-        // You can trigger game over here
+        // --- ADD THIS LINE ---
+        // Tell the central GameManager to trigger the game over sequence.
+        GameManager.Instance.TriggerGameOver();
     }
 }

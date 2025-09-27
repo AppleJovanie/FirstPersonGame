@@ -9,7 +9,6 @@ using UnityEngine.SceneManagement;
 
 public class QuizManager : MonoBehaviour
 {
-    // --- NEW STATIC FLAG ---
     public static bool IsQuizActive { get; private set; }
 
     [Header("Quiz UI")]
@@ -31,10 +30,10 @@ public class QuizManager : MonoBehaviour
 
     private Question currentQuestion;
     private Action onQuizSuccess;
-    
+
     public void StartQuiz(Question[] questions, Action successCallback, bool requiresKey)
     {
-        EnsureInventoryManager(); // <-- grab latest manager
+        EnsureInventoryManager();
 
         Time.timeScale = 0f;
         if (playerHudCanvas != null)
@@ -46,7 +45,7 @@ public class QuizManager : MonoBehaviour
         {
             inventoryManager.ConsumeKey();
         }
-        
+
         onQuizSuccess = successCallback;
 
         if (inventoryManager != null)
@@ -67,6 +66,7 @@ public class QuizManager : MonoBehaviour
     {
         IsQuizActive = false;
         Time.timeScale = 1f;
+
         if (playerHudCanvas != null)
         {
             playerHudCanvas.SetActive(true);
@@ -83,7 +83,7 @@ public class QuizManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
-    
+
     private void AnswerSelected(int index)
     {
         foreach (var btn in answerButtons) { btn.interactable = false; }
@@ -104,13 +104,18 @@ public class QuizManager : MonoBehaviour
         }
     }
 
-    private System.Collections.IEnumerator CorrectAnswerRoutine()
+    private IEnumerator CorrectAnswerRoutine()
     {
         yield return new WaitForSecondsRealtime(1f);
+
+        // ✅ FIX: properly end the quiz first
+        EndQuiz();
+
+        // then call the success action (loads next scene in ExitDoor)
         onQuizSuccess?.Invoke();
     }
 
-    private System.Collections.IEnumerator IncorrectAnswerRoutine()
+    private IEnumerator IncorrectAnswerRoutine()
     {
         yield return new WaitForSecondsRealtime(2f);
         EndQuiz();
@@ -152,7 +157,7 @@ public class QuizManager : MonoBehaviour
             }
         }
     }
-    
+
     private void DisplayNewQuestion(Question[] questions)
     {
         if (questions == null || questions.Length == 0)
@@ -173,10 +178,10 @@ public class QuizManager : MonoBehaviour
             answerButtons[i].interactable = true;
         }
     }
-    
+
     public void RewardSelected(ItemData reward)
     {
-        EnsureInventoryManager(); // <-- make sure we have the right one
+        EnsureInventoryManager();
 
         if (inventoryManager != null)
         {
@@ -190,6 +195,7 @@ public class QuizManager : MonoBehaviour
 
         EndQuiz();
     }
+
     private void EnsureInventoryManager()
     {
         if (inventoryManager == null)
@@ -197,5 +203,4 @@ public class QuizManager : MonoBehaviour
             inventoryManager = FindObjectOfType<InventoryManager>();
         }
     }
-
 }

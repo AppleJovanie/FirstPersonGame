@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -66,15 +65,14 @@ public class PauseMenu : MonoBehaviour
         ReturnToMainMenu();
     }
 
-    // --- THIS METHOD IS CORRECTED ---
     public void SaveGame()
     {
         SaveData data = new SaveData();
 
-        // Scene
+        // 1. Scene
         data.sceneName = SceneManager.GetActiveScene().name;
 
-        // Player position
+        // 2. Player Position, Health & Shield
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player == null)
         {
@@ -85,50 +83,38 @@ public class PauseMenu : MonoBehaviour
         data.y = player.transform.position.y;
         data.z = player.transform.position.z;
 
-        // Health/Shield
         PlayerHealthShield phs = player.GetComponent<PlayerHealthShield>();
-        if (phs == null)
-        {
-            Debug.LogWarning("⚠️ Player has no PlayerHealthShield component. Health/Shield won't be saved.");
-        }
-        else
+        if (phs != null)
         {
             data.currentHealth = phs.currentHealth;
             data.currentShield = phs.currentShield;
         }
 
-        // Inventory
-        if (InventoryManager.Instance == null)
-        {
-            Debug.LogWarning("⚠️ No InventoryManager instance found. Inventory won't be saved.");
-        }
-        else
+        // 3. Inventory
+        if (InventoryManager.Instance != null)
         {
             data.inventoryItems = InventoryManager.Instance.GetAllItems().Select(i => i.name).ToList();
-            Debug.Log($"<color=orange>Saving {data.inventoryItems.Count} items: {string.Join(", ", data.inventoryItems)}</color>");
         }
 
-        // --- THIS BLOCK WAS MOVED ---
-        // Quiz Machines
+        // 4. Used Quiz Machines
         data.usedQuizMachineIds = new List<string>();
         QuizMachine[] allQuizMachines = FindObjectsOfType<QuizMachine>();
-        Debug.Log($"Found {allQuizMachines.Length} quiz machines in the scene to check."); // New Log 1
-
-
         foreach (QuizMachine machine in allQuizMachines)
         {
             if (machine.hasBeenUsed)
             {
                 data.usedQuizMachineIds.Add(machine.uniqueId);
-                // New Log 2: Tells you exactly which machine ID is being saved.
-                Debug.Log($"<color=orange>SAVING quiz machine ID: {machine.uniqueId}</color>");
             }
         }
-        Debug.Log($"Saving the IDs of {data.usedQuizMachineIds.Count} used quiz machines.");
-        // --- END OF MOVED BLOCK ---
 
+        // 5. Collected Puzzle Pieces
+        FourPiecePuzzleController puzzleController = FindObjectOfType<FourPiecePuzzleController>();
+        if (puzzleController != null)
+        {
+            data.collectedPieceIds = puzzleController.GetCollectedPieceIds();
+        }
 
-        // Save the file AFTER all data has been collected.
+        // 6. Save all collected data to a file
         if (GameSaveManager.Instance != null)
         {
             GameSaveManager.Instance.SaveGame(data);
@@ -153,5 +139,6 @@ public class PauseMenu : MonoBehaviour
     public void ExitGame()
     {
         Application.Quit();
+        Debug.Log("Game Exited.");
     }
 }

@@ -20,4 +20,6 @@ public class SaveData
     // --- ADD THIS LINE ---
     // A list to store the unique IDs of all quiz machines that have been used.
     public List<string> usedQuizMachineIds;
+
+    public List<string> collectedPieceIds;
 }

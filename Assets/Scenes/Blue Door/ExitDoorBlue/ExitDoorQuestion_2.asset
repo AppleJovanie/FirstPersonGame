@@ -12,12 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ca0e77fd63755244b5f347367953318, type: 3}
   m_Name: ExitDoorQuestion_2
   m_EditorClassIdentifier: 
-  questionText: "class Profile {\r\n    private String username;\r\n    public String
-    ______() { return username; }\r\n}\nWhich type of method should be used to safely
-    retrieve the hidden username?"
+  questionText: Which method retrieves private data?
   answers:
-  - getter
   - setter
-  - public
-  - private
-  correctAnswerIndex: 0
+  - getter
+  - constructor
+  - updater
+  correctAnswerIndex: 1

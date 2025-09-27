@@ -4,6 +4,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
 using System.Linq;
+using System.Collections;
 
 public class InventoryManager : MonoBehaviour
 {
@@ -66,27 +67,54 @@ public class InventoryManager : MonoBehaviour
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        // Instead of running the setup immediately, we start the coroutine.
+        StartCoroutine(OnSceneLoadedRoutine(scene));
+    }
 
-        // When a new scene loads, our references to the old player are invalid. Clear them first.
+    private IEnumerator OnSceneLoadedRoutine(Scene scene)
+    {
+        // Wait for one frame. This gives all objects (like the Player) time to initialize.
+        yield return null;
+
+        // --- Now we can safely run all of your setup logic ---
+
+        // Clear old references to the previous scene's player.
         handTransform = null;
         playerHealth = null;
-        // --- END OF NEW BLOCK ---
 
-        ClearAllKeys();
+        // Find the new player and its components in the current scene.
         FindPlayerReferences();
-       // FindUICanvasReferences();
+
+        // After finding the new player, find their camera.
+        Camera newPlayerCamera = null;
+        if (handTransform != null) // We can use handTransform to find the root player object
+        {
+            // It's better to get the camera directly from the player.
+            newPlayerCamera = handTransform.root.GetComponentInChildren<Camera>();
+        }
+
+        // If we have a gun equipped AND we found a new camera, update the gun's reference.
+        if (currentlyEquippedGun != null && newPlayerCamera != null)
+        {
+            currentlyEquippedGun.UpdateCameraReference(newPlayerCamera);
+        }
+
+        // The rest of your existing logic
+        ClearAllKeys();
 
         GameObject ammoTextObject = GameObject.FindGameObjectWithTag("AmmoUI");
         if (ammoTextObject != null)
         {
             ammoText = ammoTextObject.GetComponent<TextMeshProUGUI>();
-            if (ammoText != null) ammoText.enabled = false;
+            if (ammoText != null) ammoText.enabled = (currentlyEquippedGun != null);
         }
-        // Now that we have found the new HandTransform, we can safely re-equip the weapon.
-        if (currentEquippableIndex != -1)
+
+        // If a gun reference was lost but we should have one, re-equip it.
+        if (currentlyEquippedGun == null && currentEquippableIndex != -1)
         {
             EquipWeaponByIndex(currentEquippableIndex);
         }
+
         RepopulateUI();
     }
 
@@ -197,7 +225,12 @@ public class InventoryManager : MonoBehaviour
                 currentlyEquippedGun.Initialize(ammoText);
             }
         }
-        else { Debug.LogError("Cannot equip weapon because HandTransform reference is missing!"); }
+        if (handTransform == null)
+        {
+            Debug.LogWarning("⚠ Cannot equip weapon because HandTransform reference is missing!");
+            return;
+        }
+
     }
 
     void ConsumeItem(ItemData itemToConsume)

@@ -12,11 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ca0e77fd63755244b5f347367953318, type: 3}
   m_Name: ExitDoorQuestion _1
   m_EditorClassIdentifier: 
-  questionText: "class Vault {\r\n    ______ int code = 1234;\r\n}\nWhich keyword
-    best hides code so that only the Vault itself can use it?"
+  questionText: "As demonstrated in the code displayed on your screen, after gathering
+    4 pieces \r\nof letters, can you determine which variable is static and which
+    is non-static?"
   answers:
-  - this
-  - private
-  - public
-  - setter
-  correctAnswerIndex: 1
+  - "\u201Cschool\u201D for Static and \u201Cname\u201D for non-static"
+  - "\u201Cpublic class Test\u201D for non-static and \u201Cschool\u201D for static"
+  - "\u201Cname\u201D for Static and \u201Cschool\u201D for non-static"
+  - "\u201Cpublic class Test\u201D for non-static and \u201Cschool\u201D for static"
+  correctAnswerIndex: 0

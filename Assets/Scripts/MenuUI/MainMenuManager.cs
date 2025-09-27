@@ -17,7 +17,7 @@ public class MainMenuManager : MonoBehaviour
         if (settingsPanel != null)
             settingsPanel.SetActive(false);
 
-        if (loadGameButton != null)
+        if (loadGameButton != null && GameSaveManager.Instance != null)
             loadGameButton.SetActive(GameSaveManager.Instance.HasSave());
     }
 
@@ -25,12 +25,31 @@ public class MainMenuManager : MonoBehaviour
     {
         if (!string.IsNullOrEmpty(newGameSceneName))
         {
+            // ✅ Clean up old managers to prevent broken references
             if (InventoryManager.Instance != null)
-            {
                 Destroy(InventoryManager.Instance.gameObject);
+
+            if (GameFlowManager.Instance != null)
+                Destroy(GameFlowManager.Instance.gameObject);
+
+            if (GameProgressManager.Instance != null)
+                Destroy(GameProgressManager.Instance.gameObject);
+
+            // ❌ Removed SettingsManager + AudioManager cleanup 
+            // (they don’t exist in your project)
+
+            // ✅ Clear save so it really starts fresh
+            if (GameSaveManager.Instance != null)
+                GameSaveManager.Instance.ClearSave();
+
+            // ✅ Reset quiz machines in the current scene (safe cleanup before reload)
+            QuizMachine[] allMachines = FindObjectsOfType<QuizMachine>();
+            foreach (QuizMachine machine in allMachines)
+            {
+                machine.ResetMachine();
             }
 
-            GameSaveManager.Instance.ClearSave();
+            // ✅ Load the main game scene fresh
             SceneManager.LoadScene(newGameSceneName);
         }
         else
@@ -38,6 +57,7 @@ public class MainMenuManager : MonoBehaviour
             Debug.LogError("❌ New Game Scene Name is not set in the Inspector!");
         }
     }
+
 
     public void OnLoadGameButton()
     {
@@ -53,7 +73,6 @@ public class MainMenuManager : MonoBehaviour
         }
     }
 
-    // --- THIS METHOD IS MODIFIED WITH THE NEW LOGS ---
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
@@ -77,9 +96,7 @@ public class MainMenuManager : MonoBehaviour
 
             // Load Inventory
             if (InventoryManager.Instance != null)
-            {
                 InventoryManager.Instance.LoadInventoryFromSave(data.inventoryItems);
-            }
 
             // Remove Duplicate Item Pickups from Scene
             if (data.inventoryItems != null)
@@ -94,23 +111,18 @@ public class MainMenuManager : MonoBehaviour
                 }
             }
 
-            // --- ADD THIS ENTIRE BLOCK TO DEBUG QUIZ MACHINES ---
-
             // Load Quiz Machine States
             if (data.usedQuizMachineIds != null && data.usedQuizMachineIds.Count > 0)
             {
-                // Log 1: Shows you all the used IDs loaded from the file.
                 Debug.Log($"<color=cyan>LOADED used machine IDs: {string.Join(", ", data.usedQuizMachineIds)}</color>");
 
                 QuizMachine[] allQuizMachines = FindObjectsOfType<QuizMachine>();
                 foreach (QuizMachine machine in allQuizMachines)
                 {
-                    // Log 2: Shows you which machine it's checking in the scene.
                     Debug.Log($"Checking machine in scene with ID: '{machine.uniqueId}'");
 
                     if (data.usedQuizMachineIds.Contains(machine.uniqueId))
                     {
-                        // Log 3: Confirms when a match is found.
                         Debug.Log($"<color=green>MATCH FOUND! Marking '{machine.uniqueId}' as completed.</color>");
                         machine.MarkAsCompleted();
                     }
@@ -120,8 +132,6 @@ public class MainMenuManager : MonoBehaviour
             {
                 Debug.Log("<color=yellow>Loaded save data, but no used quiz machine IDs were found.</color>");
             }
-
-            // --- END OF NEW BLOCK ---
         }
 
         // Final scene setup

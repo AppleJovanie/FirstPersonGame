@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class ButtonController : MonoBehaviour, IInteractable
 {
@@ -11,6 +11,7 @@ public class ButtonController : MonoBehaviour, IInteractable
 
     void Start()
     {
+        // Keep track of progress, but don't lock out the button
         isCompleted = GameProgressManager.IsDoorCompleted(doorType);
 
         if (doorHighlightLight != null)
@@ -22,13 +23,7 @@ public class ButtonController : MonoBehaviour, IInteractable
 
     public void Interact()
     {
-        // Check if the path is permanently complete.
-        if (isCompleted)
-        {
-            Debug.Log($"The {doorType} path is already complete. This button is disabled.");
-            return;
-        }
-
+        // 🚫 Removed "disabled if completed" check
         Debug.Log($"Button for {doorType} door pressed!");
 
         // Tell the GameFlowManager which door trigger is now active.
@@ -43,14 +38,12 @@ public class ButtonController : MonoBehaviour, IInteractable
 
     private void TurnOnMyLightAndOffOthers()
     {
-        // Find all other buttons in the scene.
         ButtonController[] allButtons = FindObjectsOfType<ButtonController>();
 
         foreach (ButtonController button in allButtons)
         {
             if (button.doorHighlightLight != null)
             {
-                // Turn my light on, turn all others off.
                 button.doorHighlightLight.enabled = (button == this);
             }
         }

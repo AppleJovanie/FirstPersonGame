@@ -12,13 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ca0e77fd63755244b5f347367953318, type: 3}
   m_Name: Door5ExitQuestion
   m_EditorClassIdentifier: 
-  questionText: "class BankAccount {\r\n    ______ double balance;\r\n    public
-    void deposit(double amount) {\r\n        balance += amount;\r\n    }\r\n}\r\n\r\nWhich
-    modifier allows any other class to directly see and change balance, breaking
-    encapsulation?"
+  questionText: "As illustrated in the sample code shown on your screen regarding
+    Non-Static \r\n(Instance) Variables and Methods. What will the program output?"
   answers:
-  - setter
-  - public
-  - 'Encapsulation '
-  - methods
-  correctAnswerIndex: 1
+  - 'Name: Alice Name: Bob'
+  - 'Name: Bob Name: Alice'
+  - Syntax Error.
+  - A and B
+  correctAnswerIndex: 0

@@ -12,12 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ca0e77fd63755244b5f347367953318, type: 3}
   m_Name: ExitDoorQuestion_2
   m_EditorClassIdentifier: 
-  questionText: "class Profile {\r\n    private String username;\r\n    public String
-    ______() { return username; }\r\n}\nWhich type of method should be used to safely
-    retrieve the hidden username?"
+  questionText: "As illustrated in the code presented on your screen, following the
+    collection of \r\n4 letters, can you determine the number of instances of the
+    variable 'school' that \r\nare present in memory?"
   answers:
-  - getter
-  - setter
-  - public
-  - private
-  correctAnswerIndex: 0
+  - Only 2 copy of school exists, shared across all objects.
+  - Only 4 copy of ABC university exists, shared across all objects.
+  - Only 4 copy of university exists, shared across all objects
+  - Only 1 copy of school university exists, shared across all objects.
+  correctAnswerIndex: 3

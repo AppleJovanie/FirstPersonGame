@@ -12,11 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ca0e77fd63755244b5f347367953318, type: 3}
   m_Name: ExitDoorQuestion _1
   m_EditorClassIdentifier: 
-  questionText: "class Vault {\r\n    ______ int code = 1234;\r\n}\nWhich keyword
-    best hides code so that only the Vault itself can use it?"
+  questionText: ' What is the main difference between the `==` operator and the `equals()`
+    method when comparing objects? '
   answers:
-  - this
-  - private
-  - public
-  - setter
+  - '`==` compares the values of objects, while `equals()` compares their memory
+    addresses '
+  - '`==` compares memory addresses, while `equals()` compares the actual values
+    of objects '
+  - 'Both `==` and `equals()` compare memory addresses '
+  - 'Both `==` and `equals()` compare the actual values of objects '
   correctAnswerIndex: 1

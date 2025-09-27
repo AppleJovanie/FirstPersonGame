@@ -12,13 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ca0e77fd63755244b5f347367953318, type: 3}
   m_Name: Door4ExitQuestion
   m_EditorClassIdentifier: 
-  questionText: "class Citizen {\r\n    private String idNumber;\r\n    public void
-    setIdNumber(String idNumber) {\r\n        ______.idNumber = idNumber;\r\n   
-    }\r\n}\r\n\r\nWhat keyword ensures we\u2019re assigning the parameter to the
-    actual field of the object?"
+  questionText: Which keyword distinguishes a class field from a parameter?
   answers:
-  - public
-  - setter
-  - private
+  - self
   - this
-  correctAnswerIndex: 3
+  - super
+  - own
+  correctAnswerIndex: 1

@@ -12,13 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ca0e77fd63755244b5f347367953318, type: 3}
   m_Name: Door5ExitQuestion
   m_EditorClassIdentifier: 
-  questionText: "class BankAccount {\r\n    ______ double balance;\r\n    public
-    void deposit(double amount) {\r\n        balance += amount;\r\n    }\r\n}\r\n\r\nWhich
-    modifier allows any other class to directly see and change balance, breaking
-    encapsulation?"
+  questionText: Which access modifier breaks encapsulation by exposing data?
   answers:
-  - setter
+  - private
   - public
-  - 'Encapsulation '
-  - methods
+  - protected
+  - default
   correctAnswerIndex: 1

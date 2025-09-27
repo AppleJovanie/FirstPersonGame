@@ -33,6 +33,12 @@ public class Gun : MonoBehaviour
     public Camera playerCamera;
     private TextMeshProUGUI ammoText;
 
+    public void UpdateCameraReference(Camera newCamera)
+    {
+        playerCamera = newCamera;
+        Debug.Log($"Gun's camera reference updated to: {newCamera.name}");
+    }
+
     void Awake()
     {
         currentAmmoInClip = clipSize;
@@ -59,29 +65,36 @@ public class Gun : MonoBehaviour
 
     void Update()
     {
-        // If any menu is open, stop all gun logic.
-        if (PauseMenu.isPaused || QuizManager.IsQuizActive || InventoryManager.IsMenuOpen)
-        {
-            return;
-        }
+        // Check for menus being open
+        if (PauseMenu.isPaused) { return; }
+        if (QuizManager.IsQuizActive) { return; }
+        if (InventoryManager.IsMenuOpen) { return; }
+        if (isReloading) { return; }
 
-        // Check if the gun is actually equipped
-        if (transform.parent == null || !transform.parent.CompareTag("PlayerHand"))
+        // Check for shooting input
+        if (Input.GetMouseButtonDown(0)) // Left Mouse Button
         {
-            return;
-        }
+            Debug.Log("--- Fire Button Pressed! ---");
 
-        if (isReloading)
-        {
-            return;
-        }
+            // --- Diagnostic Checks ---
+            if (playerCamera == null)
+            {
+                Debug.LogError("SHOOT FAILED: The 'playerCamera' reference is NULL.");
+                return;
+            }
+            if (ammoText == null)
+            {
+                Debug.LogError("SHOOT FAILED: The 'ammoText' reference is NULL.");
+                return;
+            }
+            // --- End of Checks ---
 
-        if (Input.GetMouseButtonDown(0))
-        {
+            Debug.Log("SUCCESS: All references are valid. Calling Shoot().");
             Shoot();
         }
 
-        if (Input.GetMouseButtonDown(1) && currentAmmoInClip < clipSize && currentReserveAmmo > 0)
+        // Check for reloading input
+        if (Input.GetMouseButtonDown(1) && currentAmmoInClip < clipSize && currentReserveAmmo > 0) // Right Mouse Button
         {
             StartCoroutine(Reload());
         }

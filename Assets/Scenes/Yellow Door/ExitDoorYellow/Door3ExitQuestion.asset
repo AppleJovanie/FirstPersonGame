@@ -12,12 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ca0e77fd63755244b5f347367953318, type: 3}
   m_Name: Door3ExitQuestion
   m_EditorClassIdentifier: 
-  questionText: "class ScoreBoard {\r\n    private int score;\r\n    public void
-    ______(int s) { score = s; }\r\n}\r\n\r\nWhat kind of method is this, allowing
-    controlled updates to a private value?"
+  questionText: "As illustrated in the information presented on your screen, following
+    the \r\ncollection of 4 letters, What attributes cause 'name' to be considered
+    a non-static \r\n(instance) variable?"
   answers:
-  - this
-  - setter
-  - private
-  - static
-  correctAnswerIndex: 1
+  - Because it is declared without the static keyword, and it belongs to each object 
+    of the Student class.
+  - Because it is declared without the non-static keyword, and it belongs to each 
+    object of the Student class.
+  - Because, It is associated with every instance of the Student class.
+  - All of the above.
+  correctAnswerIndex: 0

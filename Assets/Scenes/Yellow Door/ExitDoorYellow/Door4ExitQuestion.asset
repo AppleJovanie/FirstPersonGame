@@ -12,13 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ca0e77fd63755244b5f347367953318, type: 3}
   m_Name: Door4ExitQuestion
   m_EditorClassIdentifier: 
-  questionText: "class Citizen {\r\n    private String idNumber;\r\n    public void
-    setIdNumber(String idNumber) {\r\n        ______.idNumber = idNumber;\r\n   
-    }\r\n}\r\n\r\nWhat keyword ensures we\u2019re assigning the parameter to the
-    actual field of the object?"
+  questionText: "As demonstrated in the sample code displayed on your screen concerning
+    Non\x02Static (Instance) Variables and Methods, after the creation of two objects,
+    how \r\nmany instances of the variable name are present in memory?"
   answers:
-  - public
-  - setter
-  - private
-  - this
-  correctAnswerIndex: 3
+  - "Three copies \u2192 one for s1, one for s2."
+  - "Four copies \u2192 one for s1, one for s2"
+  - "Two copies \u2192 one for s1, one for s2."
+  - All of the above
+  correctAnswerIndex: 2

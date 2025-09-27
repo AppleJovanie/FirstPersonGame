@@ -1,35 +1,35 @@
 ﻿using UnityEngine;
 using System.IO;
+using System.Collections.Generic;
 
 public class GameSaveManager : MonoBehaviour
 {
     public static GameSaveManager Instance { get; private set; }
 
+    // Keep last loaded save in memory (optional)
+    private SaveData lastLoadedData;
+
+    // Track quiz machine states
+    public HashSet<string> usedQuizMachineIds = new HashSet<string>();
+
     void Awake()
     {
-        // This checks if another GameSaveManager already exists.
         if (Instance != null && Instance != this)
         {
-            // If one does exist, this new one is a duplicate, so it destroys itself.
-            // This does NOT destroy the original manager.
             Destroy(gameObject);
         }
         else
         {
-            // If this is the first and only instance, it registers itself.
             Instance = this;
-
-            // This is the crucial line that prevents it from being destroyed on scene load.
             DontDestroyOnLoad(gameObject);
         }
     }
-
-    // --- The rest of your script is perfectly fine ---
 
     public void SaveGame(SaveData data)
     {
         string json = JsonUtility.ToJson(data, true);
         File.WriteAllText(Application.persistentDataPath + "/save.json", json);
+        lastLoadedData = data;
     }
 
     public SaveData LoadGame()
@@ -42,6 +42,10 @@ public class GameSaveManager : MonoBehaviour
 
         string json = File.ReadAllText(path);
         SaveData data = JsonUtility.FromJson<SaveData>(json);
+        lastLoadedData = data;
+
+        // Rebuild runtime machine states
+        usedQuizMachineIds = new HashSet<string>(data.usedQuizMachineIds);
         return data;
     }
 
@@ -57,5 +61,11 @@ public class GameSaveManager : MonoBehaviour
         {
             File.Delete(path);
         }
+
+        // Reset runtime state
+        lastLoadedData = null;
+        usedQuizMachineIds.Clear();
+
+        Debug.Log("🗑 Save data fully cleared (file + memory).");
     }
 }

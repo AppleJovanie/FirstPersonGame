@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 191882940437686983}
   - component: {fileID: 2494632836709798523}
   m_Layer: 6
-  m_Name: yellow
+  m_Name: KeyYellow
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -119,4 +119,3 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   itemData: {fileID: 11400000, guid: b5e03b9c6cddb474694479543fc6d4a1, type: 2}
-  itemName: Key Yellow
